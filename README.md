@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/interfaz-Compose-4285F4?style=flat-square" alt="Jetpack Compose"/>
   <a href="https://github.com/GermanBartoli/CodexPulse/actions/workflows/android.yml"><img src="https://github.com/GermanBartoli/CodexPulse/actions/workflows/android.yml/badge.svg" alt="Pruebas Android"/></a>
 </p>
-<p align="center"><a href="https://github.com/GermanBartoli/CodexPulse/releases">Descargar APK</a> · <a href="#primeros-pasos">Primeros pasos</a> · <a href="#tecnologías">Tecnologías</a> · <a href="#conexión-y-privacidad">Privacidad</a></p>
+<p align="center"><a href="https://github.com/GermanBartoli/CodexPulse/releases/tag/v0.5.1">Descargar APK 0.5.1 · versión de prueba</a> · <a href="#primeros-pasos">Primeros pasos</a> · <a href="#tecnologías">Tecnologías</a> · <a href="#conexión-y-privacidad">Privacidad</a></p>
 
 ![Presentación de Codex Pulse](docs/portada.svg)
 
@@ -70,6 +70,15 @@ La opción de borrar datos elimina la sesión y el historial del teléfono y can
 Esta es una aplicación comunitaria, no oficial ni afiliada a OpenAI. La consulta usa el servicio interno `/backend-api/wham/usage`; puede cambiar, rechazar accesos o dejar de funcionar. La compilación y las pruebas de demostración no verifican la autorización de una cuenta real. No se simulan porcentajes reales: la demostración se identifica explícitamente.
 
 Si no hay red, se conserva el último dato con su hora y se informa el error. Una fecha de reinicio vencida no se interpreta como una cuota renovada hasta consultar nuevamente.
+
+## Guías y comunidad
+
+- [Guía de uso](docs/GUIA_DE_USO.md): instalación, conexión, widgets y ajustes.
+- [Preguntas frecuentes](docs/PREGUNTAS_FRECUENTES.md): cuotas, historial, privacidad y soluciones comunes.
+- [Cómo colaborar](CONTRIBUTING.md): informar errores, proponer mejoras y enviar código.
+- [Código de conducta](CODE_OF_CONDUCT.md): pautas para participar en la comunidad.
+
+Las novedades de cada publicación están en [Releases](https://github.com/GermanBartoli/CodexPulse/releases).
 
 ## Desarrollo
 
