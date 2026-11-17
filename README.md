@@ -1,6 +1,36 @@
-# Codex Pulse
+<p align="center"><strong>ANDROID · WIDGETS · PRIVACIDAD</strong></p>
+<h1 align="center">Codex Pulse</h1>
+<p align="center"><strong>Tu cuota de Codex. De un vistazo.</strong><br/>Consultá cuánto queda, cuándo se renueva y elegí cómo verlo en tu inicio.</p>
+<p align="center">
+  <a href="https://github.com/GermanBartoli/CodexPulse/releases"><img src="https://img.shields.io/badge/versión-0.5.1-8FE4C4?style=flat-square" alt="Versión 0.5.1"/></a>
+  <img src="https://img.shields.io/badge/Android-12%2B-3DDC84?style=flat-square" alt="Android 12 o posterior"/>
+  <img src="https://img.shields.io/badge/Kotlin-2.4.21-7F52FF?style=flat-square" alt="Kotlin 2.4.21"/>
+  <img src="https://img.shields.io/badge/interfaz-Compose-4285F4?style=flat-square" alt="Jetpack Compose"/>
+  <a href="https://github.com/GermanBartoli/CodexPulse/actions/workflows/android.yml"><img src="https://github.com/GermanBartoli/CodexPulse/actions/workflows/android.yml/badge.svg" alt="Pruebas Android"/></a>
+</p>
+<p align="center"><a href="https://github.com/GermanBartoli/CodexPulse/releases">Descargar APK</a> · <a href="#primeros-pasos">Primeros pasos</a> · <a href="#tecnologías">Tecnologías</a> · <a href="#conexión-y-privacidad">Privacidad</a></p>
 
-Aplicación Android de German Bartoli para consultar la disponibilidad de Codex desde el teléfono, con cinco widgets de inicio. Compatible desde Android 12; orientada a Android 16.
+![Presentación de Codex Pulse](docs/portada.svg)
+
+*Portada ilustrativa con datos de ejemplo. Aplicación comunitaria, no oficial ni afiliada a OpenAI.*
+
+## Mirá antes de agregar
+
+| Tu consumo | Tu próximo widget |
+| --- | --- |
+| <img src="docs/inicio-demo.png" width="290" alt="Inicio con cuotas de demostración"/> | <img src="docs/vista-previa-demo.png" width="290" alt="Vista previa real del widget horizontal"/> |
+
+Capturas de la versión 0.5.0 obtenidas en un emulador Android 16, exclusivamente con datos de demostración. Se conservan los archivos originales, sin reducir su resolución. La versión 0.5.1 agrega la lista de widgets instalados debajo del consumo.
+
+## Primeros pasos
+
+1. Descargá la APK firmada desde [Releases](https://github.com/GermanBartoli/CodexPulse/releases). Cada versión incluye `SHA256SUMS.txt` para comprobar el archivo.
+2. Abrila en Android 12 o posterior. Si Android lo solicita, autorizá a la aplicación desde la que abriste el archivo para instalar esta APK. No hace falta desactivar Play Protect.
+3. Probá **Explorar la demostración** o usá **Conectar con ChatGPT**. Elegí tu navegador y completá el código de dispositivo en la página oficial.
+4. En **Ajustes**, recorré las vistas previas y tocá **Agregar este widget**.
+5. En **Inicio → Tus widgets agregados**, revisá los que ya tenés y abrí **Configurar** para personalizar cada uno.
+
+Para actualizar, instalá la nueva APK sobre la anterior, sin desinstalar. La app conserva la sesión y los datos locales. No está publicada en Google Play; las versiones actuales son de prueba.
 
 ## Qué incluye
 
@@ -10,6 +40,7 @@ Aplicación Android de German Bartoli para consultar la disponibilidad de Codex 
 - Horizontal 4×2: porcentajes, barras y próximas renovaciones.
 - Historial 4×3: añade la evolución local de la cuota primaria.
 - Pantallas separadas de Inicio, Historial y Ajustes.
+- Tus widgets agregados: cantidad, nombre y configuración de cada instancia; la lista se actualiza al volver a la app y cada 15 segundos mientras está abierta.
 - Vista previa con el diseño real del widget y botón para agregarlo al inicio.
 - Diseño destacado para cuentas que informan una sola cuota, con porcentajes grandes.
 - Configuración individual de cada widget desde Ajustes o desde el inicio, si el lanzador permite reconfigurarlo. Guardar aplica solo a ese widget; Cancelar conserva su estilo.
@@ -61,3 +92,29 @@ Para publicar una APK firmada, definir PULSE_KEYSTORE y PULSE_STORE_PASSWORD ún
 ## Referencias
 
 Se estudió la integración comunitaria de [Codex Usage Android](https://github.com/guberm/Codex-Usage-Android) para contrastar el protocolo de acceso y las cuotas. Ver [avisos de terceros](TERCEROS.md).
+
+## Tecnologías
+
+| Tecnología | Uso en la app |
+| --- | --- |
+| Kotlin 2.4.21 · Java 17 | Código Android; JDK 21 para compilar. |
+| Jetpack Compose · Material 3 | Pantallas nativas, navegación y colores del teléfono. |
+| Compose BOM 2026.09.00 | Versiones coordinadas de la interfaz. |
+| Jetpack Glance 1.2.0 | Cinco widgets y sus vistas previas reales. |
+| WorkManager 2.12.0 | Actualizaciones periódicas sujetas a las reglas de Android. |
+| Android Keystore · AES-GCM | Sesión e historial cifrados dentro del dispositivo. |
+| Android SDK 37 · destino API 36 | Compilación actual y destino Android 16; mínimo API 31. |
+| AGP 9.5.0 · Gradle 9.9.1 | Compilación, pruebas y APK firmada. |
+| JUnit · Compose UI Test | Pruebas unitarias y flujos en un emulador Android 16. |
+
+## Automatizaciones
+
+- **GitHub Actions:** compila, ejecuta pruebas y genera capturas con datos ficticios en Android 16.
+- **Dependabot:** propone actualizaciones semanales de Gradle y GitHub Actions mediante pull requests. No se fusionan automáticamente. [Configuración oficial](https://docs.github.com/en/code-security/concepts/supply-chain-security/about-the-dependabot-yml-file).
+- **Revisión de secretos:** comprueba patrones de credenciales y nombres de archivos sensibles en el historial de Git, sin imprimir sus valores. Es una comprobación preventiva, no una garantía de ausencia de secretos.
+
+## Autoría
+
+Creado por **[German Bartoli](https://github.com/GermanBartoli)**, con **Codex** como asistente de desarrollo y coautor de los cambios realizados con su ayuda. Los commits correspondientes incluyen el reconocimiento `Co-authored-by: Codex <noreply@openai.com>`.
+
+Los créditos de terceros se conservan en [TERCEROS.md](TERCEROS.md). Para informar un problema, abrí un [issue](https://github.com/GermanBartoli/CodexPulse/issues) sin adjuntar tokens, códigos de acceso, correos ni archivos de sesión. Para datos sensibles, consultá [SECURITY.md](SECURITY.md).
