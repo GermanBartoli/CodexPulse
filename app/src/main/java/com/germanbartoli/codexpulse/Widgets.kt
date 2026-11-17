@@ -1,0 +1,103 @@
+package com.germanbartoli.codexpulse
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.glance.*
+import androidx.glance.action.*
+import androidx.glance.appwidget.*
+import androidx.glance.appwidget.action.*
+import androidx.glance.layout.*
+import androidx.glance.text.*
+import androidx.glance.unit.ColorProvider
+
+class WidgetCompacto : GlanceAppWidgetReceiver() { override val glanceAppWidget = CompactoGlance() }
+class WidgetCompleto : GlanceAppWidgetReceiver() { override val glanceAppWidget = CompletoGlance() }
+class WidgetMinimo : GlanceAppWidgetReceiver() { override val glanceAppWidget = MinimoGlance() }
+class WidgetSemanal : GlanceAppWidgetReceiver() { override val glanceAppWidget = SemanalGlance() }
+class WidgetHistorial : GlanceAppWidgetReceiver() { override val glanceAppWidget = HistorialGlance() }
+class CompactoGlance : PulseWidget(Variante.COMPACTO)
+class CompletoGlance : PulseWidget(Variante.COMPLETO)
+class MinimoGlance : PulseWidget(Variante.MINIMO)
+class SemanalGlance : PulseWidget(Variante.SEMANAL)
+class HistorialGlance : PulseWidget(Variante.HISTORIAL)
+enum class Variante { COMPACTO, COMPLETO, MINIMO, SEMANAL, HISTORIAL }
+class RefrescarWidget : ActionCallback {
+    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) { Actualizacion.solicitar(context) }
+}
+open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
+    override val sizeMode = SizeMode.Exact
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val estado = Repositorio.leer(context)
+        provideContent { GlanceTheme { ContenidoWidget(estado, variante) } }
+    }
+}
+@Composable private fun ContenidoWidget(estado: Estado, variante: Variante) {
+    val minimo = variante == Variante.MINIMO
+    Column(GlanceModifier.fillMaxSize().background(GlanceTheme.colors.widgetBackground).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 10.dp else 16.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
+        if(minimo) {
+            val limite = estado.consumo?.limites?.minByOrNull { it.disponible }
+            Text("Codex", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold))
+            Text(limite?.let { "${it.disponible}%" } ?: "Abrir", style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 25.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            Text(if(estado.demostracion) "DEMO" else if(estado.error != null) "Sin actualizar" else "disponible", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 9.sp), maxLines = 1)
+        } else {
+            Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Codex Pulse", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold), modifier = GlanceModifier.defaultWeight())
+                Text("↻", modifier = GlanceModifier.padding(5.dp).clickable(actionRunCallback<RefrescarWidget>()), style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 22.sp))
+            }
+            val consumo = estado.consumo
+            if(consumo == null) Text("Conectá tu cuenta desde la app", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp))
+            else {
+                when(variante) {
+                    Variante.SEMANAL -> {
+                        val semanal = consumo.limites.firstOrNull { it.segundos == 604800L }
+                        if(semanal == null) Text("Esta cuenta no informó una cuota semanal", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp))
+                        else CuotaWidget(semanal, true)
+                    }
+                    Variante.COMPLETO, Variante.HISTORIAL -> {
+                        if(LocalSize.current.width >= 250.dp) Row(GlanceModifier.fillMaxWidth()) {
+                            consumo.limites.forEach { limite -> Column(GlanceModifier.defaultWeight().padding(end = 10.dp)) { CuotaWidget(limite, true) } }
+                        } else consumo.limites.forEach { CuotaWidget(it, false) }
+                        if(variante == Variante.HISTORIAL && LocalSize.current.height >= 210.dp) {
+                            Spacer(GlanceModifier.height(10.dp))
+                            if(estado.historial.size >= 2) {
+                                Image(ImageProvider(graficoWidget(estado.historial)), "Historial de cuota primaria disponible, de cero a cien por ciento", modifier = GlanceModifier.fillMaxWidth().height(48.dp))
+                                Text("Últimas ${estado.historial.size} consultas · cuota primaria", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp))
+                            } else Text("El historial aparecerá con tus próximas consultas", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 11.sp))
+                        }
+                    }
+                    else -> consumo.limites.forEach { CuotaWidget(it, false) }
+                }
+                Spacer(GlanceModifier.height(6.dp))
+                Text(if(estado.demostracion) "DEMO · datos de ejemplo" else if(estado.error != null) "Sin actualizar · abrí la app" else antiguedad(consumo.fecha), style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp), maxLines = 2)
+            }
+        }
+    }
+}
+@Composable private fun CuotaWidget(limite: Limite, completo: Boolean) {
+    val color = if(limite.disponible <= 20) GlanceTheme.colors.error else GlanceTheme.colors.primary
+    Text(limite.nombre, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 11.sp), maxLines = 1)
+    Text("${limite.disponible}%", style = TextStyle(color = color, fontSize = if(completo) 32.sp else 21.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+    if(completo) Text("disponible", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 11.sp))
+    LinearProgressIndicator(progress = limite.disponible/100f, modifier = GlanceModifier.fillMaxWidth().height(4.dp), color = color, backgroundColor = GlanceTheme.colors.surfaceVariant)
+    if(completo) Text(limite.renovacion(), style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp), maxLines = 2)
+    Spacer(GlanceModifier.height(5.dp))
+}
+private fun graficoWidget(historial: List<Consumo>): Bitmap {
+    val imagen = Bitmap.createBitmap(600,100,Bitmap.Config.ARGB_8888)
+    val lienzo = Canvas(imagen)
+    val pincel = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = android.graphics.Color.rgb(35,160,115); strokeWidth = 4f; style = Paint.Style.STROKE }
+    val linea = android.graphics.Path()
+    historial.forEachIndexed { indice, consumo ->
+        val x = 4 + indice.toFloat()/(historial.size-1).coerceAtLeast(1)*592
+        val y = 4 + (1-consumo.limites.first().disponible/100f)*92
+        if(indice == 0) linea.moveTo(x,y) else linea.lineTo(x,y)
+    }
+    lienzo.drawPath(linea,pincel)
+    return imagen
+}
