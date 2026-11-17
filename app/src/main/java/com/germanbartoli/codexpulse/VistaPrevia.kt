@@ -22,16 +22,13 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.compose
 import kotlinx.coroutines.CancellationException
 
-private enum class TipoVista(val titulo: String, val ancho: Int, val alto: Int) {
-    MINIMO("Indicador 1×1", 80, 80),
-    SEMANAL("Semanal 2×2", 170, 180),
-    COMPACTO("Dos límites 2×2", 170, 180),
-    COMPLETO("Horizontal 4×2", 350, 180),
-    HISTORIAL("Historial 4×3", 350, 270);
-    fun widget(): GlanceAppWidget = when(this) {
-        MINIMO -> MinimoGlance(); SEMANAL -> SemanalGlance(); COMPACTO -> CompactoGlance()
-        COMPLETO -> CompletoGlance(); HISTORIAL -> HistorialGlance()
-    }
+private enum class TipoVista(val titulo: String, val ancho: Int, val alto: Int, val variante: Variante) {
+    MINIMO("Indicador 1×1", 80, 80, Variante.MINIMO),
+    SEMANAL("Semanal 2×2", 170, 180, Variante.SEMANAL),
+    COMPACTO("Dos límites 2×2", 170, 180, Variante.COMPACTO),
+    COMPLETO("Horizontal 4×2", 350, 180, Variante.COMPLETO),
+    HISTORIAL("Historial 4×3", 350, 270, Variante.HISTORIAL);
+    fun widget(estilo: EstiloWidgets): GlanceAppWidget = PulseWidget(variante, estilo)
     fun receptor(): Class<out GlanceAppWidgetReceiver> = when(this) {
         MINIMO -> WidgetMinimo::class.java; SEMANAL -> WidgetSemanal::class.java
         COMPACTO -> WidgetCompacto::class.java; COMPLETO -> WidgetCompleto::class.java
@@ -45,13 +42,13 @@ private fun desactivarAcciones(vista: View) {
     if (vista is ViewGroup) for (indice in 0 until vista.childCount) desactivarAcciones(vista.getChildAt(indice))
 }
 
-@Composable fun VistaPreviaWidgets(estado: Estado, estilo: EstiloWidgets) {
+@Composable fun VistaPreviaWidgets(estado: Estado, estilo: EstiloWidgets, tipoFijo: Variante? = null) {
     val contexto = LocalContext.current
     var indice by remember { mutableIntStateOf(2) }
     var mensaje by remember { mutableStateOf<String?>(null) }
-    val tipo = TipoVista.entries[indice]
+    val tipo = TipoVista.entries.firstOrNull { it.variante == tipoFijo } ?: TipoVista.entries[indice]
     Text("Vista previa", style = MaterialTheme.typography.titleLarge)
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+    if (tipoFijo == null) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
         TextButton(onClick = { indice = (indice + TipoVista.entries.size - 1) % TipoVista.entries.size }) { Text("Anterior") }
         Text(tipo.titulo, style = MaterialTheme.typography.labelLarge)
         TextButton(onClick = { indice = (indice + 1) % TipoVista.entries.size }) { Text("Siguiente") }
@@ -63,7 +60,7 @@ private fun desactivarAcciones(vista: View) {
         LaunchedEffect(tipo, ancho, estilo, estado.consumo?.fecha, estado.demostracion, estado.error) {
             remoto = null
             error = false
-            try { remoto = tipo.widget().compose(contexto, size = DpSize(ancho, tipo.alto.dp)) }
+            try { remoto = tipo.widget(estilo).compose(contexto, size = DpSize(ancho, tipo.alto.dp)) }
             catch (cancelacion: CancellationException) { throw cancelacion }
             catch (_: Exception) { error = true }
         }
@@ -84,7 +81,7 @@ private fun desactivarAcciones(vista: View) {
         }
     }
     Text("Usa el mismo diseño del widget. El tamaño final depende del inicio de tu teléfono.", style = MaterialTheme.typography.bodySmall)
-    Button(onClick = {
+    if (tipoFijo == null) Button(onClick = {
         val gestor = AppWidgetManager.getInstance(contexto)
         if (gestor.isRequestPinAppWidgetSupported) gestor.requestPinAppWidget(ComponentName(contexto, tipo.receptor()), null, null)
         else mensaje = "Mantené presionado el inicio de Android y elegí Widgets → Codex Pulse."

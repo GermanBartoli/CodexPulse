@@ -12,7 +12,8 @@ Aplicación Android de German Bartoli para consultar la disponibilidad de Codex 
 - Pantallas separadas de Inicio, Historial y Ajustes.
 - Vista previa con el diseño real del widget y botón para agregarlo al inicio.
 - Diseño destacado para cuentas que informan una sola cuota, con porcentajes grandes.
-- Personalización global de widgets: colores del teléfono o verde Pulse; fondo adaptable, oscuro o transparente.
+- Configuración individual de cada widget desde Ajustes o desde el inicio, si el lanzador permite reconfigurarlo. Guardar aplica solo a ese widget; Cancelar conserva su estilo.
+- Estilo por defecto para los widgets sin configuración propia: colores del teléfono o verde Pulse; fondo adaptable, oscuro o transparente.
 - Indicador 1×1 configurable: menor disponibilidad, límite de cinco horas o semanal, sin sustituir cuotas ausentes.
 - Historial con fechas, leyenda por cuota y filtros de 24 horas, 7 días o todas las consultas guardadas.
 - Aplicación con modo claro y oscuro, colores del teléfono, actualización manual y demostración sin cuenta.

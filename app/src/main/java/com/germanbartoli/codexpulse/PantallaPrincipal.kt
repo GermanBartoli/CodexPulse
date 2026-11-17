@@ -45,6 +45,7 @@ class PantallaPrincipal : ComponentActivity() {
     val actividad = contexto as PantallaPrincipal
     val alcance = rememberCoroutineScope()
     var seccion by remember { mutableStateOf(Seccion.INICIO) }
+    var instalados by remember { mutableStateOf<List<WidgetInstalado>>(emptyList()) }
     var estado by remember { mutableStateOf(Estado()) }
     var ocupado by remember { mutableStateOf(false) }
     var codigo by remember { mutableStateOf<CodigoDispositivo?>(null) }
@@ -72,7 +73,7 @@ class PantallaPrincipal : ComponentActivity() {
     val colores = if(dinamico) { if(oscuro) dynamicDarkColorScheme(contexto) else dynamicLightColorScheme(contexto) }
         else if(oscuro) darkColorScheme(primary = Color(0xFF8FE4C4), background = Color(0xFF0C1714), surface = Color(0xFF13231D), secondaryContainer = Color(0xFF263D34))
         else lightColorScheme(primary = Color(0xFF146C4F), background = Color(0xFFF4FAF6), surface = Color(0xFFF4FAF6), secondaryContainer = Color(0xFFD8EEE2))
-    suspend fun recargar() { estado = Repositorio.leer(contexto) }
+    suspend fun recargar() { estado = Repositorio.leer(contexto); instalados = listarWidgets(contexto) }
     suspend fun refrescar() {
         ocupado = true
         try { Repositorio.actualizar(contexto); actualizarWidgets(contexto); recargar() }
@@ -186,35 +187,22 @@ class PantallaPrincipal : ComponentActivity() {
                     }
                 }
                 if (seccion == Seccion.AJUSTES) {
+                Text("Widgets de tu inicio", style = MaterialTheme.typography.titleMedium)
+                if (instalados.isEmpty()) Text("Agregá un widget desde la vista previa. Después podrás configurarlo por separado.", style = MaterialTheme.typography.bodySmall)
+                instalados.forEachIndexed { indice, widget ->
+                    OutlinedButton(onClick = {
+                        contexto.startActivity(Intent(contexto, ConfiguracionWidget::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget.id))
+                    }, modifier = Modifier.fillMaxWidth()) { Text("${widget.nombre} · ${indice + 1}") }
+                }
                 VistaPreviaWidgets(estado, estiloWidgets)
                 HorizontalDivider()
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text("Colores de la aplicación"); Text("Se adapta al modo claro y oscuro", style = MaterialTheme.typography.bodySmall) }
                     Switch(checked = dinamico, onCheckedChange = { dinamico = it; preferencias.edit().putBoolean("dinamico", it).apply() })
                 }
-                Text("Personalizar widgets", style = MaterialTheme.typography.titleMedium)
-                Text("Los cambios se aplican a todos tus widgets.", style = MaterialTheme.typography.bodySmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PaletaWidget.entries.forEach { paleta ->
-                        FilterChip(selected = estiloWidgets.paleta == paleta, onClick = { cambiarWidgets(estiloWidgets.copy(paleta = paleta)) }, label = { Text(paleta.titulo) })
-                    }
-                }
-                Text("Fondo del widget", style = MaterialTheme.typography.labelLarge)
-                FondoWidget.entries.forEach { fondo ->
-                    Row(Modifier.fillMaxWidth().selectable(selected = estiloWidgets.fondo == fondo, role = Role.RadioButton, onClick = { cambiarWidgets(estiloWidgets.copy(fondo = fondo)) }), verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = estiloWidgets.fondo == fondo, onClick = null)
-                        Text(fondo.titulo)
-                    }
-                }
-                if (estiloWidgets.fondo == FondoWidget.TRANSPARENTE) Text("Si el texto se pierde sobre tu fondo de pantalla, elegí Adaptable u Oscuro.", style = MaterialTheme.typography.bodySmall)
-                Text("Cuota del indicador 1×1", style = MaterialTheme.typography.labelLarge)
-                CuotaIndicador.entries.forEach { cuota ->
-                    Row(Modifier.fillMaxWidth().selectable(selected = estiloWidgets.cuota == cuota, role = Role.RadioButton, onClick = { cambiarWidgets(estiloWidgets.copy(cuota = cuota)) }), verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = estiloWidgets.cuota == cuota, onClick = null)
-                        Text(cuota.titulo)
-                    }
-                }
-                Text("Si tu cuenta no informa la cuota elegida, el indicador muestra «No informado».", style = MaterialTheme.typography.bodySmall)
+                Text("Estilo por defecto", style = MaterialTheme.typography.titleMedium)
+                Text("Se aplica a los widgets que no tienen un estilo propio.", style = MaterialTheme.typography.bodySmall)
+                EditorEstiloWidgets(estiloWidgets) { cambiarWidgets(it) }
                 Text("Frecuencia de actualización", style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(15, 30, 60).forEach { frecuencia ->
@@ -273,7 +261,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.4.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.5.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }

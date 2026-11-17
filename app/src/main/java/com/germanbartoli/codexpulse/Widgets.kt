@@ -34,11 +34,11 @@ enum class Variante { COMPACTO, COMPLETO, MINIMO, SEMANAL, HISTORIAL }
 class RefrescarWidget : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) { Actualizacion.solicitar(context) }
 }
-open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
+open class PulseWidget(private val variante: Variante, private val estiloPrevio: EstiloWidgets? = null) : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val estado = Repositorio.leer(context)
-        val estilo = Personalizacion.leer(context)
+        val estilo = estiloPrevio ?: (if (GlanceAppWidgetManager(context).getAppWidgetId(id) > 0) Personalizacion.leerPropio(context, id) else null) ?: Personalizacion.leer(context)
         provideContent {
             val claro = lightColorScheme(primary = Color(0xFF146C4F), background = Color(0xFFF4FAF6), surface = Color(0xFFF4FAF6), onSurface = Color(0xFF13231D), onSurfaceVariant = Color(0xFF41564B), surfaceVariant = Color(0xFFD8EEE2))
             val oscuro = darkColorScheme(primary = Color(0xFF8FE4C4), background = Color(0xFF0C1714), surface = Color(0xFF13231D), onSurface = Color(0xFFE2F4E9), onSurfaceVariant = Color(0xFFB7CDBF), surfaceVariant = Color(0xFF30483C))
@@ -53,11 +53,11 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
 }
 @Composable private fun ContenidoWidget(estado: Estado, variante: Variante, estilo: EstiloWidgets) {
     val minimo = variante == Variante.MINIMO
-    Column(GlanceModifier.fillMaxSize().background(when { estilo.fondo == FondoWidget.TRANSPARENTE -> ColorProvider(Color.Transparent); estilo.paleta == PaletaWidget.PULSE || estilo.fondo == FondoWidget.OSCURO -> GlanceTheme.colors.surface; else -> GlanceTheme.colors.widgetBackground }).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 10.dp else 12.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
+    Column(GlanceModifier.fillMaxSize().background(when { estilo.fondo == FondoWidget.TRANSPARENTE -> ColorProvider(Color.Transparent); estilo.paleta == PaletaWidget.PULSE || estilo.fondo == FondoWidget.OSCURO -> GlanceTheme.colors.surface; else -> GlanceTheme.colors.widgetBackground }).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 6.dp else 12.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
         if(minimo) {
             val limite = estado.consumo?.let { limiteIndicador(it.limites, estilo.cuota) }
-            Text(when (estilo.cuota) { CuotaIndicador.MENOR -> "Codex"; CuotaIndicador.CINCO_HORAS -> "5 horas"; CuotaIndicador.SEMANAL -> "Semanal" }, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold))
-            Text(limite?.let { "${it.disponible}%" } ?: if (estado.consumo == null) "Abrir" else "—", style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 30.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            Text(when (estilo.cuota) { CuotaIndicador.MENOR -> "Codex"; CuotaIndicador.CINCO_HORAS -> "5 horas"; CuotaIndicador.SEMANAL -> "Semanal" }, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 10.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            Text(limite?.let { "${it.disponible}%" } ?: if (estado.consumo == null) "Abrir" else "—", style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 28.sp, fontWeight = FontWeight.Bold), maxLines = 1)
             Text(if(estado.demostracion) "DEMO" else if(estado.error != null) "Sin actualizar" else if (limite == null && estado.consumo != null) "No informado" else "disponible", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 9.sp), maxLines = 1)
         } else {
             Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {

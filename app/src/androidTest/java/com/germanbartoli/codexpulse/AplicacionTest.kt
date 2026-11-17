@@ -9,6 +9,7 @@ import android.content.Context
 import android.appwidget.AppWidgetManager
 import android.graphics.Bitmap
 import androidx.glance.appwidget.compose
+import androidx.glance.appwidget.provideContent
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -115,6 +116,33 @@ class AplicacionTest {
         Assert.assertFalse(notificacion.publicVersion.extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString().contains("%"))
         Preferencias.alertas(contexto, false)
         interfaz.waitUntil(5000) { notificaciones.activeNotifications.isEmpty() }
+        suspend fun identificadorPrueba(): androidx.glance.GlanceId {
+            var capturado: androidx.glance.GlanceId? = null
+            val widget = object : androidx.glance.appwidget.GlanceAppWidget() {
+                override suspend fun provideGlance(context: Context, id: androidx.glance.GlanceId) {
+                    capturado = id
+                    provideContent { androidx.glance.text.Text("Prueba aislada") }
+                }
+            }
+            widget.compose(contexto, size = DpSize(80.dp, 80.dp))
+            return requireNotNull(capturado)
+        }
+        val primero = runBlocking { identificadorPrueba() }
+        val segundo = runBlocking { identificadorPrueba() }
+        Assert.assertNotEquals(primero, segundo)
+        val estiloPrimero = EstiloWidgets(PaletaWidget.PULSE, FondoWidget.OSCURO, CuotaIndicador.SEMANAL)
+        val estiloSegundo = EstiloWidgets(PaletaWidget.TELEFONO, FondoWidget.TRANSPARENTE, CuotaIndicador.MENOR)
+        runBlocking {
+            Personalizacion.guardarPropio(contexto, primero, estiloPrimero)
+            Assert.assertNull(Personalizacion.leerPropio(contexto, segundo))
+            Personalizacion.guardarPropio(contexto, segundo, estiloSegundo)
+            Assert.assertEquals(estiloPrimero, Personalizacion.leerPropio(contexto, primero))
+            Assert.assertEquals(estiloSegundo, Personalizacion.leerPropio(contexto, segundo))
+            Personalizacion.guardarPropio(contexto, primero, null)
+            Assert.assertNull(Personalizacion.leerPropio(contexto, primero))
+            Assert.assertEquals(estiloSegundo, Personalizacion.leerPropio(contexto, segundo))
+            Personalizacion.guardarPropio(contexto, segundo, null)
+        }
         val bytes = File(contexto.noBackupFilesDir, "pulse.cifrado").readBytes()
         Assert.assertFalse(String(bytes, Charsets.ISO_8859_1).contains("demostracion"))
         Assert.assertTrue(runBlocking { Repositorio.leer(contexto).demostracion })
