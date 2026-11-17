@@ -1,6 +1,6 @@
 # Seguridad
 
-No publiques contraseñas, tokens, códigos de dispositivo, archivos de sesión ni claves de firma en issues o capturas.
+Para proteger tu cuenta, evitá compartir contraseñas, códigos de acceso o datos de sesión al reportar un problema o publicar capturas.
 
 Si descubrís una vulnerabilidad, usá **Security → Advisories → Report a vulnerability** si GitHub muestra esa opción. Si no está disponible, abrí un issue solicitando un canal privado, sin incluir detalles explotables ni credenciales.
 
