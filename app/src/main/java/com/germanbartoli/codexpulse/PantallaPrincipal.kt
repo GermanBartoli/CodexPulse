@@ -160,7 +160,10 @@ class PantallaPrincipal : ComponentActivity() {
                             Text("Autorizá tu dispositivo", style = MaterialTheme.typography.titleLarge)
                             Text("Anotá este código y escribilo en la página oficial:")
                             Text(solicitud.codigo, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-                            Button(onClick = { contexto.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Conexion.PAGINA_ACCESO))) }) { Text("Abrir auth.openai.com") }
+                            Button(onClick = {
+                                val pagina = Intent(Intent.ACTION_VIEW, Uri.parse(Conexion.PAGINA_ACCESO)).addCategory(Intent.CATEGORY_BROWSABLE)
+                                contexto.startActivity(Intent.createChooser(pagina, "Elegí un navegador para iniciar sesión"))
+                            }) { Text("Elegir navegador") }
                             Text("Volvé a esta app después de autorizar. No compartas el código.", style = MaterialTheme.typography.bodySmall)
                             TextButton(onClick = { acceso?.cancel(); alcance.launch { Repositorio.nuevaGeneracion() } }) { Text("Cancelar") }
                         }
@@ -176,7 +179,7 @@ class PantallaPrincipal : ComponentActivity() {
                 Text("Hecho para mirar de un vistazo.", style = MaterialTheme.typography.labelSmall, color = colores.onSurfaceVariant)
             }
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.1.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.1.1 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }
