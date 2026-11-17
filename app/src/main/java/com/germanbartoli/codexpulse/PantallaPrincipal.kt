@@ -161,6 +161,26 @@ class PantallaPrincipal : ComponentActivity() {
                     if(!estado.demostracion) OutlinedButton(onClick = { alcance.launch { Repositorio.demostracion(contexto); recargar(); actualizarWidgets(contexto) } }, enabled = !ocupado, modifier = Modifier.fillMaxWidth()) { Text("Explorar la demostración") }
                 }
                 }
+                if (seccion == Seccion.INICIO) {
+                    HorizontalDivider()
+                    Text("Tus widgets agregados", style = MaterialTheme.typography.titleLarge)
+                    if (instalados.isEmpty()) {
+                        Text("Todavía no agregaste widgets de Codex Pulse a tu pantalla de inicio.", style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = { seccion = Seccion.AJUSTES }) { Text("Ver los widgets disponibles") }
+                    } else {
+                        Text(if (instalados.size == 1) "Tenés 1 widget en tu inicio" else "Tenés ${instalados.size} widgets en tu inicio", style = MaterialTheme.typography.bodySmall)
+                        instalados.forEachIndexed { indice, widget ->
+                            OutlinedCard(Modifier.fillMaxWidth()) {
+                                Row(Modifier.padding(16.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Text("${widget.nombre} · ${indice + 1}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleSmall)
+                                    TextButton(onClick = {
+                                        contexto.startActivity(Intent(contexto, ConfiguracionWidget::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widget.id))
+                                    }) { Text("Configurar") }
+                                }
+                            }
+                        }
+                    }
+                }
                 if (seccion == Seccion.HISTORIAL) {
                     Text("Historial de disponibilidad", style = MaterialTheme.typography.headlineSmall)
                     if (estado.demostracion) Mensaje("Datos de ejemplo", "El historial es ilustrativo y no corresponde a una cuenta real.")
@@ -261,7 +281,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.5.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.5.1 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }
