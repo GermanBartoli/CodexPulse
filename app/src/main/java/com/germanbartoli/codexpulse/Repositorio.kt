@@ -33,9 +33,16 @@ object Repositorio {
     suspend fun demostracion(contexto: Context) = withContext(Dispatchers.IO) { bloqueo.withLock {
         ++generacion
         val ejemplo = Consumo.ejemplo()
-        AlmacenSeguro(contexto).guardar(JSONObject().put("demostracion", true).put("consumo", ejemplo.json()))
+        val historial = JSONArray()
+        for (indice in 0..11) {
+            val limites = ejemplo.limites.mapIndexed { posicion, limite ->
+                limite.copy(usado = (limite.usado - (11 - indice) * if (posicion == 0) 2.0 else 1.5).coerceAtLeast(0.0))
+            }
+            historial.put(ejemplo.copy(limites = limites, fecha = ejemplo.fecha - (11 - indice) * 1800000L).json())
+        }
+        AlmacenSeguro(contexto).guardar(JSONObject().put("demostracion", true).put("consumo", ejemplo.json()).put("historial", historial))
     } }
-    suspend fun borrar(contexto: Context) = withContext(Dispatchers.IO) { bloqueo.withLock { ++generacion; AlmacenSeguro(contexto).borrar() } }
+    suspend fun borrar(contexto: Context) = withContext(Dispatchers.IO) { bloqueo.withLock { ++generacion; Avisos.cancelar(contexto); AlmacenSeguro(contexto).borrar() } }
     suspend fun actualizar(contexto: Context): Boolean = withContext(Dispatchers.IO) { bloqueo.withLock {
         val almacen = AlmacenSeguro(contexto)
         val datos = try { almacen.leer() } catch (_: Exception) { return@withLock false }
@@ -61,6 +68,27 @@ object Repositorio {
             lista.put(consumo.json())
             datos.put("consumo", consumo.json()).put("historial", lista).remove("error")
             almacen.guardar(datos)
+            // Las marcas de aviso se cifran junto al historial. Solo se evalúan datos recién consultados.
+            if (Preferencias.alertas(contexto) && Avisos.permitido(contexto)) {
+                val marcas = datos.optJSONObject("avisos") ?: JSONObject()
+                val pendientes = mutableListOf<Pair<Int, Limite>>()
+                consumo.limites.forEachIndexed { indice, limite ->
+                    val clave = indice.toString()
+                    val marca = marcas.optJSONObject(clave)
+                    val periodo = "${limite.segundos}:${limite.reinicio}"
+                    val anterior = marca?.takeIf { it.optString("periodo") == periodo }?.optInt("umbral")
+                    val umbral = umbralPendiente(limite.disponible, anterior)
+                    if (limite.reinicio != null && limite.reinicio <= System.currentTimeMillis() / 1000) return@forEachIndexed
+                    if (umbral != null) {
+                        pendientes.add(indice to limite)
+                        marcas.put(clave, JSONObject().put("periodo", periodo).put("umbral", umbral))
+                    }
+                }
+                if (Avisos.mostrar(contexto, pendientes.map { it.second })) {
+                    datos.put("avisos", marcas)
+                    almacen.guardar(datos)
+                }
+            }
             true
         } catch (error: CancellationException) { throw error }
         catch (error: Exception) {

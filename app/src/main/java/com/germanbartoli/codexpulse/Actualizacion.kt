@@ -14,8 +14,8 @@ class Actualizacion(contexto: Context, parametros: WorkerParameters) : Coroutine
     companion object {
         private fun restricciones() = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
         fun programar(contexto: Context) {
-            WorkManager.getInstance(contexto).enqueueUniquePeriodicWork("consumo-periodico", ExistingPeriodicWorkPolicy.KEEP,
-                PeriodicWorkRequestBuilder<Actualizacion>(30, TimeUnit.MINUTES).setConstraints(restricciones()).build())
+            WorkManager.getInstance(contexto).enqueueUniquePeriodicWork("consumo-periodico", ExistingPeriodicWorkPolicy.UPDATE,
+                PeriodicWorkRequestBuilder<Actualizacion>(Preferencias.minutos(contexto).toLong(), TimeUnit.MINUTES).setConstraints(restricciones()).build())
         }
         fun solicitar(contexto: Context) {
             WorkManager.getInstance(contexto).enqueueUniqueWork("consumo-manual", ExistingWorkPolicy.KEEP,

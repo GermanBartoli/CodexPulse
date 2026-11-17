@@ -39,7 +39,7 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
 }
 @Composable private fun ContenidoWidget(estado: Estado, variante: Variante) {
     val minimo = variante == Variante.MINIMO
-    Column(GlanceModifier.fillMaxSize().background(GlanceTheme.colors.widgetBackground).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 10.dp else 16.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
+    Column(GlanceModifier.fillMaxSize().background(GlanceTheme.colors.widgetBackground).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 10.dp else 12.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
         if(minimo) {
             val limite = estado.consumo?.limites?.minByOrNull { it.disponible }
             Text("Codex", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold))
@@ -48,7 +48,7 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
         } else {
             Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Codex Pulse", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold), modifier = GlanceModifier.defaultWeight())
-                Text("↻", modifier = GlanceModifier.padding(5.dp).clickable(actionRunCallback<RefrescarWidget>()), style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 22.sp))
+                Text("↻", modifier = GlanceModifier.padding(2.dp).clickable(actionRunCallback<RefrescarWidget>()), style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 20.sp))
             }
             val consumo = estado.consumo
             if(consumo == null) Text("Conectá tu cuenta desde la app", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp))
@@ -73,7 +73,7 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
                     }
                     else -> consumo.limites.forEach { CuotaWidget(it, false) }
                 }
-                Spacer(GlanceModifier.height(6.dp))
+                Spacer(GlanceModifier.height(3.dp))
                 Text(if(estado.demostracion) "DEMO · datos de ejemplo" else if(estado.error != null) "Sin actualizar · abrí la app" else antiguedad(consumo.fecha), style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp), maxLines = 2)
             }
         }
@@ -82,11 +82,11 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
 @Composable private fun CuotaWidget(limite: Limite, completo: Boolean) {
     val color = if(limite.disponible <= 20) GlanceTheme.colors.error else GlanceTheme.colors.primary
     Text(limite.nombre, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 11.sp), maxLines = 1)
-    Text("${limite.disponible}%", style = TextStyle(color = color, fontSize = if(completo) 32.sp else 21.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+    Text("${limite.disponible}%", style = TextStyle(color = color, fontSize = if(completo) 28.sp else 19.sp, fontWeight = FontWeight.Bold), maxLines = 1)
     if(completo) Text("disponible", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 11.sp))
     LinearProgressIndicator(progress = limite.disponible/100f, modifier = GlanceModifier.fillMaxWidth().height(4.dp), color = color, backgroundColor = GlanceTheme.colors.surfaceVariant)
     if(completo) Text(limite.renovacion(), style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp), maxLines = 2)
-    Spacer(GlanceModifier.height(5.dp))
+    Spacer(GlanceModifier.height(3.dp))
 }
 private fun graficoWidget(historial: List<Consumo>): Bitmap {
     val imagen = Bitmap.createBitmap(600,100,Bitmap.Config.ARGB_8888)

@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Canvas
@@ -51,6 +53,13 @@ class PantallaPrincipal : ComponentActivity() {
     var navegadores by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     val preferencias = remember { contexto.getSharedPreferences("apariencia", 0) }
     var dinamico by remember { mutableStateOf(preferencias.getBoolean("dinamico", true)) }
+    var minutos by remember { mutableIntStateOf(Preferencias.minutos(contexto)) }
+    var alertas by remember { mutableStateOf(Preferencias.alertas(contexto) && Avisos.permitido(contexto)) }
+    val permisoAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+        alertas = concedido && Avisos.permitido(contexto)
+        Preferencias.alertas(contexto, alertas)
+        if (!alertas) aviso = "Las alertas siguen apagadas. Podés habilitar las notificaciones desde Ajustes de Android."
+    }
     val oscuro = isSystemInDarkTheme()
     val colores = if(dinamico) { if(oscuro) dynamicDarkColorScheme(contexto) else dynamicLightColorScheme(contexto) }
         else if(oscuro) darkColorScheme(primary = Color(0xFF8FE4C4), background = Color(0xFF0C1714), surface = Color(0xFF13231D), secondaryContainer = Color(0xFF263D34))
@@ -69,6 +78,7 @@ class PantallaPrincipal : ComponentActivity() {
     LaunchedEffect(Unit) {
         actividad.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             recargar()
+            alertas = Preferencias.alertas(contexto) && Avisos.permitido(contexto)
             if(estado.conectado) { Actualizacion.programar(contexto); Actualizacion.solicitar(contexto) }
             while(isActive) { delay(15000); recargar() }
         }
@@ -179,7 +189,34 @@ class PantallaPrincipal : ComponentActivity() {
                     Column(Modifier.weight(1f)) { Text("Colores de la aplicación"); Text("Se adapta al modo claro y oscuro", style = MaterialTheme.typography.bodySmall) }
                     Switch(checked = dinamico, onCheckedChange = { dinamico = it; preferencias.edit().putBoolean("dinamico", it).apply() })
                 }
-                Text("Actualización automática cada 30 minutos aproximadamente. Android puede demorarla para ahorrar batería. El botón permite consultar manualmente.", style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
+                Text("Frecuencia de actualización", style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(15, 30, 60).forEach { frecuencia ->
+                        FilterChip(selected = minutos == frecuencia, onClick = {
+                            minutos = frecuencia
+                            Preferencias.frecuencia(contexto, frecuencia)
+                            if (estado.conectado) Actualizacion.programar(contexto)
+                        }, label = { Text("$frecuencia min") })
+                    }
+                }
+                Text("Android puede demorar las consultas para ahorrar batería. El botón Actualizar permite consultar manualmente.", style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Avisarme cuando quede poco")
+                        Text("Al llegar al 20% y al 10%, sin repetir el mismo aviso. Solo con datos reales.", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Switch(checked = alertas, onCheckedChange = { activar ->
+                        if (activar && android.os.Build.VERSION.SDK_INT >= 33 &&
+                            contexto.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                            permisoAvisos.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            alertas = activar && Avisos.permitido(contexto)
+                            Preferencias.alertas(contexto, alertas)
+                            if (activar && !alertas) aviso = "Android bloquea las notificaciones. Habilitalas en Ajustes → Aplicaciones → Codex Pulse → Notificaciones."
+                        }
+                    })
+                }
+                Text("Se revisa el consumo en cada consulta; las alertas no son instantáneas. La pantalla bloqueada oculta el porcentaje.", style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
                 if(estado.conectado || estado.demostracion || estado.error != null) TextButton(onClick = { confirmarBorrado = true }, enabled = !ocupado) { Text("Borrar sesión y datos de este teléfono", color = colores.error) }
                 Text("Hecho para mirar de un vistazo.", style = MaterialTheme.typography.labelSmall, color = colores.onSurfaceVariant)
             }
@@ -209,7 +246,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.1.2 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.2.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }

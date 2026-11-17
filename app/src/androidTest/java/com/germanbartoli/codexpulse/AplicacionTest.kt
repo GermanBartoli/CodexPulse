@@ -54,6 +54,29 @@ class AplicacionTest {
                 Assert.assertTrue(vista.width > 0)
             }
         }
+        Assert.assertEquals(12, runBlocking { Repositorio.leer(contexto).historial.size })
+        Assert.assertFalse(Preferencias.alertas(contexto))
+        interfaz.onNodeWithText("15 min").performScrollTo().performClick()
+        Assert.assertEquals(15, Preferencias.minutos(contexto))
+        interfaz.onNodeWithText("60 min").performClick()
+        Assert.assertEquals(60, Preferencias.minutos(contexto))
+        interfaz.onNodeWithText("30 min").performClick()
+        Assert.assertEquals(30, Preferencias.minutos(contexto))
+        val ajustes = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        File(contexto.getExternalFilesDir(null), "ajustes.png").outputStream().use { ajustes.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        ajustes.recycle()
+        val automatizacion = InstrumentationRegistry.getInstrumentation().uiAutomation
+        automatizacion.grantRuntimePermission(contexto.packageName, android.Manifest.permission.POST_NOTIFICATIONS)
+        Preferencias.alertas(contexto, true)
+        runBlocking { Repositorio.actualizar(contexto) }
+        val notificaciones = contexto.getSystemService(android.app.NotificationManager::class.java)
+        Assert.assertTrue("La demostración no debe emitir alertas", notificaciones.activeNotifications.isEmpty())
+        Assert.assertTrue(Avisos.mostrar(contexto, listOf(Limite(90.0, null, 18000))))
+        val notificacion = notificaciones.activeNotifications.single().notification
+        Assert.assertEquals(android.app.Notification.VISIBILITY_PRIVATE, notificacion.visibility)
+        Assert.assertFalse(notificacion.publicVersion.extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString().contains("%"))
+        Preferencias.alertas(contexto, false)
+        Assert.assertTrue(notificaciones.activeNotifications.isEmpty())
         val bytes = File(contexto.noBackupFilesDir, "pulse.cifrado").readBytes()
         Assert.assertFalse(String(bytes, Charsets.ISO_8859_1).contains("demostracion"))
         Assert.assertTrue(runBlocking { Repositorio.leer(contexto).demostracion })

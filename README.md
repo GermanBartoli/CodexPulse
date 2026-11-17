@@ -10,8 +10,10 @@ Aplicación Android de German Bartoli para consultar la disponibilidad de Codex 
 - Horizontal 4×2: porcentajes, barras y próximas renovaciones.
 - Historial 4×3: añade la evolución local de la cuota primaria.
 - Aplicación con modo claro y oscuro, colores del teléfono, actualización manual y demostración sin cuenta.
-- Consulta automática aproximadamente cada 30 minutos, sujeta al ahorro de batería de Android.
+- Consulta automática configurable cada 15, 30 o 60 minutos, sujeta al ahorro de batería de Android.
 - Historial de las últimas 96 consultas, cifrado y guardado únicamente en el dispositivo.
+- Alertas opcionales al quedar 20% y 10%, una por umbral y período informado. Desactivadas inicialmente; requieren permiso de notificaciones.
+- Demostración con historial ilustrativo, sin conectar una cuenta ni generar alertas.
 
 Los tamaños son orientativos y dependen del lanzador. El historial empieza con las consultas de esta aplicación; no reconstruye el consumo anterior. Los porcentajes no representan un número fijo de tokens. Los tokens exactos por día no están disponibles mediante esta conexión.
 
@@ -21,7 +23,7 @@ La autorización se realiza por código de dispositivo en https://auth.openai.co
 
 La sesión renovable se guarda cifrada con AES-GCM y una clave no exportable de Android Keystore. El historial también se cifra. Los archivos se excluyen de las copias de seguridad y transferencias del sistema. No se incluyen credenciales de OpenAI en el repositorio o la APK.
 
-La app conecta directamente con auth.openai.com y chatgpt.com mediante HTTPS, sin servidor propio, publicidad ni analítica. No sigue redirecciones HTTP con credenciales. Los widgets no muestran correo, identificador de cuenta ni tokens. La pantalla del código de acceso impide las capturas del sistema.
+La app conecta directamente con auth.openai.com y chatgpt.com mediante HTTPS, sin servidor propio, publicidad ni analítica. No sigue redirecciones HTTP con credenciales. Los widgets no muestran correo, identificador de cuenta ni tokens. Las notificaciones ocultan los porcentajes en la pantalla bloqueada y se retiran al desactivar las alertas o borrar la sesión. Las marcas para evitar avisos repetidos también se cifran. La pantalla del código de acceso impide las capturas del sistema.
 
 La opción de borrar datos elimina la sesión y el historial del teléfono y cancela las actualizaciones. No revoca otras sesiones de ChatGPT. Si el teléfono se pierde, revisar y cerrar las sesiones desde la cuenta oficial.
 
