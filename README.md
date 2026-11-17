@@ -113,6 +113,12 @@ Se estudió la integración comunitaria de [Codex Usage Android](https://github.
 - **Dependabot:** propone actualizaciones semanales de Gradle y GitHub Actions mediante pull requests. No se fusionan automáticamente. [Configuración oficial](https://docs.github.com/en/code-security/concepts/supply-chain-security/about-the-dependabot-yml-file).
 - **Revisión de secretos:** comprueba patrones de credenciales y nombres de archivos sensibles en el historial de Git, sin imprimir sus valores. Es una comprobación preventiva, no una garantía de ausencia de secretos.
 
+## Licencia
+
+El código de Codex Pulse se publica bajo la [licencia MIT](LICENSE.md). Podés usarlo, modificarlo y redistribuirlo, incluso comercialmente, conservando el aviso de autoría y la licencia. Se entrega sin garantía. Los avisos de las partes adaptadas de otros proyectos se conservan en [TERCEROS.md](TERCEROS.md).
+
+El texto legal original se conserva en inglés para mantener la licencia estándar reconocible. La licencia del código no otorga derechos sobre marcas ni acceso a servicios de terceros.
+
 ## Autoría
 
 Creado por **[German Bartoli](https://github.com/GermanBartoli)**, con **Codex** como asistente de desarrollo y coautor de los cambios realizados con su ayuda. Los commits correspondientes incluyen el reconocimiento `Co-authored-by: Codex <noreply@openai.com>`.
