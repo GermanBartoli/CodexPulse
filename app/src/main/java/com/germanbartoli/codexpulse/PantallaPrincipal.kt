@@ -10,7 +10,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -53,6 +54,11 @@ class PantallaPrincipal : ComponentActivity() {
     var navegadores by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) }
     val preferencias = remember { contexto.getSharedPreferences("apariencia", 0) }
     var dinamico by remember { mutableStateOf(preferencias.getBoolean("dinamico", true)) }
+    var estiloWidgets by remember { mutableStateOf(Personalizacion.leer(contexto)) }
+    fun cambiarWidgets(estilo: EstiloWidgets) {
+        estiloWidgets = estilo; Personalizacion.guardar(contexto, estilo)
+        alcance.launch { actualizarWidgets(contexto) }
+    }
     var minutos by remember { mutableIntStateOf(Preferencias.minutos(contexto)) }
     var alertas by remember { mutableStateOf(Preferencias.alertas(contexto) && Avisos.permitido(contexto)) }
     val permisoAvisos = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
@@ -130,7 +136,7 @@ class PantallaPrincipal : ComponentActivity() {
                             else aviso = "Mantené presionado el inicio y elegí Widgets → Codex Pulse."
                         }) { Text(nombre) }
                     }
-                    Text("El indicador pequeño muestra el menor porcentaje disponible entre tus límites. Los tamaños pueden variar según el inicio de tu teléfono.", style = MaterialTheme.typography.bodySmall)
+                    Text("Podés elegir qué cuota muestra el indicador pequeño en Personalizar widgets. Los tamaños pueden variar según el inicio de tu teléfono.", style = MaterialTheme.typography.bodySmall)
                 } ?: Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Tu cuota de Codex,\nsin abrir la PC.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
                     Text("Consultá cuánto queda y cuándo se renuevan tus límites, desde la app o tu pantalla de inicio.", color = colores.onSurfaceVariant)
@@ -189,6 +195,29 @@ class PantallaPrincipal : ComponentActivity() {
                     Column(Modifier.weight(1f)) { Text("Colores de la aplicación"); Text("Se adapta al modo claro y oscuro", style = MaterialTheme.typography.bodySmall) }
                     Switch(checked = dinamico, onCheckedChange = { dinamico = it; preferencias.edit().putBoolean("dinamico", it).apply() })
                 }
+                Text("Personalizar widgets", style = MaterialTheme.typography.titleMedium)
+                Text("Los cambios se aplican a todos tus widgets.", style = MaterialTheme.typography.bodySmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PaletaWidget.entries.forEach { paleta ->
+                        FilterChip(selected = estiloWidgets.paleta == paleta, onClick = { cambiarWidgets(estiloWidgets.copy(paleta = paleta)) }, label = { Text(paleta.titulo) })
+                    }
+                }
+                Text("Fondo del widget", style = MaterialTheme.typography.labelLarge)
+                FondoWidget.entries.forEach { fondo ->
+                    Row(Modifier.fillMaxWidth().selectable(selected = estiloWidgets.fondo == fondo, role = Role.RadioButton, onClick = { cambiarWidgets(estiloWidgets.copy(fondo = fondo)) }), verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = estiloWidgets.fondo == fondo, onClick = null)
+                        Text(fondo.titulo)
+                    }
+                }
+                if (estiloWidgets.fondo == FondoWidget.TRANSPARENTE) Text("Si el texto se pierde sobre tu fondo de pantalla, elegí Adaptable u Oscuro.", style = MaterialTheme.typography.bodySmall)
+                Text("Cuota del indicador 1×1", style = MaterialTheme.typography.labelLarge)
+                CuotaIndicador.entries.forEach { cuota ->
+                    Row(Modifier.fillMaxWidth().selectable(selected = estiloWidgets.cuota == cuota, role = Role.RadioButton, onClick = { cambiarWidgets(estiloWidgets.copy(cuota = cuota)) }), verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = estiloWidgets.cuota == cuota, onClick = null)
+                        Text(cuota.titulo)
+                    }
+                }
+                Text("Si tu cuenta no informa la cuota elegida, el indicador muestra «No informado».", style = MaterialTheme.typography.bodySmall)
                 Text("Frecuencia de actualización", style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(15, 30, 60).forEach { frecuencia ->
@@ -246,7 +275,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.2.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.3.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }
@@ -272,24 +301,4 @@ class PantallaPrincipal : ComponentActivity() {
             Text(limite.renovacion(), style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
         }
     }
-}
-@Composable private fun Grafico(historial: List<Consumo>) {
-    val color = MaterialTheme.colorScheme.primary
-    val secundario = MaterialTheme.colorScheme.tertiary
-    Canvas(Modifier.fillMaxWidth().height(110.dp).padding(vertical = 12.dp)) {
-        for(indice in 0..1) {
-            val puntos = historial.map { it.limites.getOrNull(indice)?.disponible }
-            val linea = Path()
-            var iniciado = false
-            puntos.forEachIndexed { posicion, valor ->
-                if(valor == null) iniciado = false else {
-                    val x = posicion.toFloat()/(puntos.size-1).coerceAtLeast(1) * size.width
-                    val y = (1 - valor/100f) * size.height
-                    if(!iniciado) { linea.moveTo(x,y); iniciado = true } else linea.lineTo(x,y)
-                }
-            }
-            drawPath(linea, if(indice == 0) color else secundario, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 4f))
-        }
-    }
-    Text("Últimas ${historial.size} consultas · 0–100% disponible\nPrimario y secundario, según los límites de tu cuenta.", style = MaterialTheme.typography.bodySmall)
 }

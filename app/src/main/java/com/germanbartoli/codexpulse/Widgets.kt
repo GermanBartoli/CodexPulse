@@ -5,6 +5,10 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.glance.material3.ColorProviders
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,17 +38,27 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
     override val sizeMode = SizeMode.Exact
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val estado = Repositorio.leer(context)
-        provideContent { GlanceTheme { ContenidoWidget(estado, variante) } }
+        val estilo = Personalizacion.leer(context)
+        provideContent {
+            val claro = lightColorScheme(primary = Color(0xFF146C4F), background = Color(0xFFF4FAF6), surface = Color(0xFFF4FAF6), onSurface = Color(0xFF13231D), onSurfaceVariant = Color(0xFF41564B), surfaceVariant = Color(0xFFD8EEE2))
+            val oscuro = darkColorScheme(primary = Color(0xFF8FE4C4), background = Color(0xFF0C1714), surface = Color(0xFF13231D), onSurface = Color(0xFFE2F4E9), onSurfaceVariant = Color(0xFFB7CDBF), surfaceVariant = Color(0xFF30483C))
+            val colores = when {
+                estilo.fondo == FondoWidget.OSCURO -> ColorProviders(if (estilo.paleta == PaletaWidget.PULSE) oscuro else dynamicDarkColorScheme(context))
+                estilo.paleta == PaletaWidget.PULSE -> ColorProviders(claro, oscuro)
+                else -> GlanceTheme.colors
+            }
+            GlanceTheme(colors = colores) { ContenidoWidget(estado, variante, estilo) }
+        }
     }
 }
-@Composable private fun ContenidoWidget(estado: Estado, variante: Variante) {
+@Composable private fun ContenidoWidget(estado: Estado, variante: Variante, estilo: EstiloWidgets) {
     val minimo = variante == Variante.MINIMO
-    Column(GlanceModifier.fillMaxSize().background(GlanceTheme.colors.widgetBackground).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 10.dp else 12.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
+    Column(GlanceModifier.fillMaxSize().background(if (estilo.fondo == FondoWidget.TRANSPARENTE) ColorProvider(Color.Transparent) else GlanceTheme.colors.widgetBackground).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 10.dp else 12.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
         if(minimo) {
-            val limite = estado.consumo?.limites?.minByOrNull { it.disponible }
-            Text("Codex", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold))
-            Text(limite?.let { "${it.disponible}%" } ?: "Abrir", style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 25.sp, fontWeight = FontWeight.Bold), maxLines = 1)
-            Text(if(estado.demostracion) "DEMO" else if(estado.error != null) "Sin actualizar" else "disponible", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 9.sp), maxLines = 1)
+            val limite = estado.consumo?.let { limiteIndicador(it.limites, estilo.cuota) }
+            Text(when (estilo.cuota) { CuotaIndicador.MENOR -> "Codex"; CuotaIndicador.CINCO_HORAS -> "5 horas"; CuotaIndicador.SEMANAL -> "Semanal" }, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold))
+            Text(limite?.let { "${it.disponible}%" } ?: if (estado.consumo == null) "Abrir" else "—", style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 25.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            Text(if(estado.demostracion) "DEMO" else if(estado.error != null) "Sin actualizar" else if (limite == null && estado.consumo != null) "No informado" else "disponible", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 9.sp), maxLines = 1)
         } else {
             Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text("Codex Pulse", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold), modifier = GlanceModifier.defaultWeight())

@@ -36,7 +36,7 @@ class AplicacionTest {
             Triple(CompactoGlance(), 170, 180), Triple(CompletoGlance(), 350, 180),
             Triple(HistorialGlance(), 350, 270)
         )
-        variantes.forEachIndexed { indice, (widget, ancho, alto) ->
+        fun capturarWidget(widget: androidx.glance.appwidget.GlanceAppWidget, ancho: Int, alto: Int, nombre: String) {
             val remoto = runBlocking { widget.compose(contexto, size = DpSize(ancho.dp, alto.dp)) }
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 val densidad = contexto.resources.displayMetrics.density
@@ -49,11 +49,30 @@ class AplicacionTest {
                 contenedor.layout(0, 0, w, h)
                 val imagen = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
                 contenedor.draw(android.graphics.Canvas(imagen))
-                File(contexto.getExternalFilesDir(null), "widget-$indice.png").outputStream().use { imagen.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                File(contexto.getExternalFilesDir(null), "widget-$nombre.png").outputStream().use { imagen.compress(Bitmap.CompressFormat.PNG, 100, it) }
                 imagen.recycle()
                 Assert.assertTrue(vista.width > 0)
             }
         }
+        variantes.forEachIndexed { indice, (widget, ancho, alto) -> capturarWidget(widget, ancho, alto, indice.toString()) }
+        interfaz.onNodeWithText("24 horas").performScrollTo().performClick()
+        interfaz.onNodeWithText("Todo").performClick()
+        interfaz.onNodeWithText("0% disponible", substring = false).performScrollTo()
+        val historial = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        File(contexto.getExternalFilesDir(null), "historial.png").outputStream().use { historial.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        historial.recycle()
+        interfaz.onNodeWithText("Verde Pulse").performScrollTo().performClick()
+        interfaz.onNodeWithText("Oscuro").performScrollTo().performClick()
+        interfaz.onNodeWithText("Límite de 5 horas").performScrollTo().performClick()
+        Assert.assertEquals(EstiloWidgets(PaletaWidget.PULSE, FondoWidget.OSCURO, CuotaIndicador.CINCO_HORAS), Personalizacion.leer(contexto))
+        capturarWidget(MinimoGlance(), 80, 80, "pulse-minimo")
+        capturarWidget(HistorialGlance(), 350, 270, "pulse-historial")
+        interfaz.onNodeWithText("Transparente").performScrollTo().performClick()
+        Assert.assertEquals(FondoWidget.TRANSPARENTE, Personalizacion.leer(contexto).fondo)
+        capturarWidget(CompactoGlance(), 170, 180, "transparente")
+        interfaz.onNodeWithText("Adaptable").performScrollTo().performClick()
+        interfaz.onNodeWithText("Del teléfono").performScrollTo().performClick()
+        interfaz.onNodeWithText("Menor disponible").performScrollTo().performClick()
         Assert.assertEquals(12, runBlocking { Repositorio.leer(contexto).historial.size })
         Assert.assertFalse(Preferencias.alertas(contexto))
         interfaz.onNodeWithText("15 min").performScrollTo().performClick()
@@ -72,11 +91,12 @@ class AplicacionTest {
         val notificaciones = contexto.getSystemService(android.app.NotificationManager::class.java)
         Assert.assertTrue("La demostración no debe emitir alertas", notificaciones.activeNotifications.isEmpty())
         Assert.assertTrue(Avisos.mostrar(contexto, listOf(Limite(90.0, null, 18000))))
+        interfaz.waitUntil(5000) { notificaciones.activeNotifications.size == 1 }
         val notificacion = notificaciones.activeNotifications.single().notification
         Assert.assertEquals(android.app.Notification.VISIBILITY_PRIVATE, notificacion.visibility)
         Assert.assertFalse(notificacion.publicVersion.extras.getCharSequence(android.app.Notification.EXTRA_TEXT).toString().contains("%"))
         Preferencias.alertas(contexto, false)
-        Assert.assertTrue(notificaciones.activeNotifications.isEmpty())
+        interfaz.waitUntil(5000) { notificaciones.activeNotifications.isEmpty() }
         val bytes = File(contexto.noBackupFilesDir, "pulse.cifrado").readBytes()
         Assert.assertFalse(String(bytes, Charsets.ISO_8859_1).contains("demostracion"))
         Assert.assertTrue(runBlocking { Repositorio.leer(contexto).demostracion })
