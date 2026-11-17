@@ -9,6 +9,9 @@ Aplicación Android de German Bartoli para consultar la disponibilidad de Codex 
 - Dos límites 2×2: vista compacta de los límites recibidos.
 - Horizontal 4×2: porcentajes, barras y próximas renovaciones.
 - Historial 4×3: añade la evolución local de la cuota primaria.
+- Pantallas separadas de Inicio, Historial y Ajustes.
+- Vista previa con el diseño real del widget y botón para agregarlo al inicio.
+- Diseño destacado para cuentas que informan una sola cuota, con porcentajes grandes.
 - Personalización global de widgets: colores del teléfono o verde Pulse; fondo adaptable, oscuro o transparente.
 - Indicador 1×1 configurable: menor disponibilidad, límite de cinco horas o semanal, sin sustituir cuotas ausentes.
 - Historial con fechas, leyenda por cuota y filtros de 24 horas, 7 días o todas las consultas guardadas.

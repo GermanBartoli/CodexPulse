@@ -53,11 +53,11 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
 }
 @Composable private fun ContenidoWidget(estado: Estado, variante: Variante, estilo: EstiloWidgets) {
     val minimo = variante == Variante.MINIMO
-    Column(GlanceModifier.fillMaxSize().background(if (estilo.fondo == FondoWidget.TRANSPARENTE) ColorProvider(Color.Transparent) else GlanceTheme.colors.widgetBackground).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 10.dp else 12.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
+    Column(GlanceModifier.fillMaxSize().background(when { estilo.fondo == FondoWidget.TRANSPARENTE -> ColorProvider(Color.Transparent); estilo.paleta == PaletaWidget.PULSE || estilo.fondo == FondoWidget.OSCURO -> GlanceTheme.colors.surface; else -> GlanceTheme.colors.widgetBackground }).appWidgetBackground().cornerRadius(24.dp).padding(if(minimo) 10.dp else 12.dp).clickable(actionStartActivity<PantallaPrincipal>())) {
         if(minimo) {
             val limite = estado.consumo?.let { limiteIndicador(it.limites, estilo.cuota) }
             Text(when (estilo.cuota) { CuotaIndicador.MENOR -> "Codex"; CuotaIndicador.CINCO_HORAS -> "5 horas"; CuotaIndicador.SEMANAL -> "Semanal" }, style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp, fontWeight = FontWeight.Bold))
-            Text(limite?.let { "${it.disponible}%" } ?: if (estado.consumo == null) "Abrir" else "—", style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 25.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            Text(limite?.let { "${it.disponible}%" } ?: if (estado.consumo == null) "Abrir" else "—", style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 30.sp, fontWeight = FontWeight.Bold), maxLines = 1)
             Text(if(estado.demostracion) "DEMO" else if(estado.error != null) "Sin actualizar" else if (limite == null && estado.consumo != null) "No informado" else "disponible", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 9.sp), maxLines = 1)
         } else {
             Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -71,10 +71,11 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
                     Variante.SEMANAL -> {
                         val semanal = consumo.limites.firstOrNull { it.segundos == 604800L }
                         if(semanal == null) Text("Esta cuenta no informó una cuota semanal", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 12.sp))
-                        else CuotaWidget(semanal, true)
+                        else CuotaPrincipal(semanal)
                     }
                     Variante.COMPLETO, Variante.HISTORIAL -> {
-                        if(LocalSize.current.width >= 250.dp) Row(GlanceModifier.fillMaxWidth()) {
+                        if(consumo.limites.size == 1) CuotaPrincipal(consumo.limites.first())
+                        else if(LocalSize.current.width >= 250.dp) Row(GlanceModifier.fillMaxWidth()) {
                             consumo.limites.forEach { limite -> Column(GlanceModifier.defaultWeight().padding(end = 10.dp)) { CuotaWidget(limite, true) } }
                         } else consumo.limites.forEach { CuotaWidget(it, false) }
                         if(variante == Variante.HISTORIAL && LocalSize.current.height >= 210.dp) {
@@ -85,14 +86,36 @@ open class PulseWidget(private val variante: Variante) : GlanceAppWidget() {
                             } else Text("El historial aparecerá con tus próximas consultas", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 11.sp))
                         }
                     }
-                    else -> consumo.limites.forEach { CuotaWidget(it, false) }
+                    else -> if(consumo.limites.size == 1) CuotaPrincipal(consumo.limites.first()) else consumo.limites.forEach { CuotaWidget(it, false) }
                 }
-                Spacer(GlanceModifier.height(3.dp))
+                Spacer(GlanceModifier.defaultWeight())
                 Text(if(estado.demostracion) "DEMO · datos de ejemplo" else if(estado.error != null) "Sin actualizar · abrí la app" else antiguedad(consumo.fecha), style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp), maxLines = 2)
             }
         }
     }
 }
+@Composable private fun CuotaPrincipal(limite: Limite) {
+    val color = if(limite.disponible <= 20) GlanceTheme.colors.error else GlanceTheme.colors.primary
+    val ancho = LocalSize.current.width >= 250.dp
+    if (ancho) {
+        Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Column(GlanceModifier.defaultWeight()) {
+                Text(limite.nombre, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 13.sp))
+                Text("${limite.disponible}%", style = TextStyle(color = color, fontSize = 48.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            }
+            Column(GlanceModifier.defaultWeight().padding(start = 12.dp)) {
+                Text("disponible", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 15.sp))
+                Text(limite.renovacion(), style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 12.sp), maxLines = 2)
+            }
+        }
+    } else {
+        Text(limite.nombre, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 12.sp))
+        Text("${limite.disponible}%", style = TextStyle(color = color, fontSize = 40.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+    }
+    LinearProgressIndicator(progress = limite.disponible / 100f, modifier = GlanceModifier.fillMaxWidth().height(6.dp), color = color, backgroundColor = GlanceTheme.colors.surfaceVariant)
+    if (!ancho) Text(limite.renovacion(), modifier = GlanceModifier.padding(top = 3.dp), style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp), maxLines = 2)
+}
+
 @Composable private fun CuotaWidget(limite: Limite, completo: Boolean) {
     val color = if(limite.disponible <= 20) GlanceTheme.colors.error else GlanceTheme.colors.primary
     Text(limite.nombre, style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 11.sp), maxLines = 1)

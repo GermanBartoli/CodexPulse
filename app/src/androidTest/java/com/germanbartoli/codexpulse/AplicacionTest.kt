@@ -11,6 +11,7 @@ import android.graphics.Bitmap
 import androidx.glance.appwidget.compose
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.asAndroidBitmap
 import org.junit.*
 import org.junit.runner.RunWith
 import kotlinx.coroutines.runBlocking
@@ -28,7 +29,7 @@ class AplicacionTest {
         interfaz.onNodeWithText("42%").assertExists()
         val proveedores = AppWidgetManager.getInstance(contexto).installedProviders.filter { it.provider.packageName == contexto.packageName }
         Assert.assertEquals(5, proveedores.size)
-        val captura = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        val captura = interfaz.onRoot().captureToImage().asAndroidBitmap()
         File(contexto.getExternalFilesDir(null), "demostracion.png").outputStream().use { captura.compress(Bitmap.CompressFormat.PNG, 100, it) }
         captura.recycle()
         val variantes = listOf(
@@ -55,18 +56,35 @@ class AplicacionTest {
             }
         }
         variantes.forEachIndexed { indice, (widget, ancho, alto) -> capturarWidget(widget, ancho, alto, indice.toString()) }
+        interfaz.onNodeWithText("Historial", substring = false).performClick()
         interfaz.onNodeWithText("24 horas").performScrollTo().performClick()
         interfaz.onNodeWithText("Todo").performClick()
         interfaz.onNodeWithText("0% disponible", substring = false).performScrollTo()
-        val historial = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        val historial = interfaz.onRoot().captureToImage().asAndroidBitmap()
         File(contexto.getExternalFilesDir(null), "historial.png").outputStream().use { historial.compress(Bitmap.CompressFormat.PNG, 100, it) }
         historial.recycle()
+        interfaz.onNodeWithText("Ajustes", substring = false).performClick()
+        interfaz.onNodeWithText("Agregar este widget").assertExists()
+        interfaz.onNodeWithText("Siguiente").performScrollTo().performClick()
+        interfaz.onNodeWithText("Horizontal 4×2").assertExists()
+        interfaz.waitUntil(10000) { interfaz.onAllNodesWithContentDescription("Vista previa de Horizontal 4×2").fetchSemanticsNodes().isNotEmpty() }
+        val previa = interfaz.onRoot().captureToImage().asAndroidBitmap()
+        File(contexto.getExternalFilesDir(null), "vista-previa.png").outputStream().use { previa.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        previa.recycle()
         interfaz.onNodeWithText("Verde Pulse").performScrollTo().performClick()
         interfaz.onNodeWithText("Oscuro").performScrollTo().performClick()
         interfaz.onNodeWithText("Límite de 5 horas").performScrollTo().performClick()
         Assert.assertEquals(EstiloWidgets(PaletaWidget.PULSE, FondoWidget.OSCURO, CuotaIndicador.CINCO_HORAS), Personalizacion.leer(contexto))
         capturarWidget(MinimoGlance(), 80, 80, "pulse-minimo")
         capturarWidget(HistorialGlance(), 350, 270, "pulse-historial")
+        val almacen = AlmacenSeguro(contexto)
+        val original = almacen.leer()
+        val unaCuota = Consumo(listOf(Limite(56.0, System.currentTimeMillis() / 1000 + 84420, 604800)), "Demostración")
+        almacen.guardar(org.json.JSONObject().put("demostracion", true).put("consumo", unaCuota.json()))
+        capturarWidget(CompactoGlance(), 170, 180, "una-cuota-compacto")
+        capturarWidget(CompletoGlance(), 350, 180, "una-cuota-horizontal")
+        capturarWidget(SemanalGlance(), 170, 180, "una-cuota-semanal")
+        almacen.guardar(original)
         interfaz.onNodeWithText("Transparente").performScrollTo().performClick()
         Assert.assertEquals(FondoWidget.TRANSPARENTE, Personalizacion.leer(contexto).fondo)
         capturarWidget(CompactoGlance(), 170, 180, "transparente")
@@ -81,7 +99,7 @@ class AplicacionTest {
         Assert.assertEquals(60, Preferencias.minutos(contexto))
         interfaz.onNodeWithText("30 min").performClick()
         Assert.assertEquals(30, Preferencias.minutos(contexto))
-        val ajustes = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        val ajustes = interfaz.onRoot().captureToImage().asAndroidBitmap()
         File(contexto.getExternalFilesDir(null), "ajustes.png").outputStream().use { ajustes.compress(Bitmap.CompressFormat.PNG, 100, it) }
         ajustes.recycle()
         val automatizacion = InstrumentationRegistry.getInstrumentation().uiAutomation
@@ -102,6 +120,7 @@ class AplicacionTest {
         Assert.assertTrue(runBlocking { Repositorio.leer(contexto).demostracion })
         interfaz.onNodeWithText("Borrar sesión y datos de este teléfono").performScrollTo().performClick()
         interfaz.onNodeWithText("Borrar", useUnmergedTree = true).performClick()
+        interfaz.onNodeWithText("Inicio", substring = false).performClick()
         interfaz.waitUntil(10000) { interfaz.onAllNodesWithText("Explorar la demostración").fetchSemanticsNodes().isNotEmpty() }
         Assert.assertFalse(File(contexto.noBackupFilesDir,"pulse.cifrado").exists())
         Assert.assertNull(runBlocking { Repositorio.leer(contexto).consumo })

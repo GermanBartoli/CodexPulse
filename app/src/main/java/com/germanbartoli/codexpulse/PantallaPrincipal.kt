@@ -32,6 +32,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.*
 
+private enum class Seccion(val titulo: String, val simbolo: String) { INICIO("Inicio", "◉"), HISTORIAL("Historial", "↗"), AJUSTES("Ajustes", "⚙") }
 class PantallaPrincipal : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +44,7 @@ class PantallaPrincipal : ComponentActivity() {
     val contexto = LocalContext.current
     val actividad = contexto as PantallaPrincipal
     val alcance = rememberCoroutineScope()
+    var seccion by remember { mutableStateOf(Seccion.INICIO) }
     var estado by remember { mutableStateOf(Estado()) }
     var ocupado by remember { mutableStateOf(false) }
     var codigo by remember { mutableStateOf<CodigoDispositivo?>(null) }
@@ -90,8 +92,16 @@ class PantallaPrincipal : ComponentActivity() {
         }
     }
     MaterialTheme(colorScheme = colores) {
-        Surface(Modifier.fillMaxSize(), color = colores.background) {
-            Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        Scaffold(containerColor = colores.background, bottomBar = {
+            NavigationBar {
+                Seccion.entries.forEach { destino ->
+                    NavigationBarItem(selected = seccion == destino, onClick = { seccion = destino },
+                        icon = { Text(destino.simbolo, fontSize = 22.sp) }, label = { Text(destino.titulo) })
+                }
+            }
+        }) { margenes ->
+            val desplazamiento = key(seccion) { rememberScrollState() }
+            Column(Modifier.fillMaxSize().padding(margenes).consumeWindowInsets(margenes).verticalScroll(desplazamiento).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("TU CONSUMO, A MANO", style = MaterialTheme.typography.labelSmall, color = colores.primary, letterSpacing = 2.sp)
@@ -99,6 +109,7 @@ class PantallaPrincipal : ComponentActivity() {
                     }
                     FilledTonalIconButton(onClick = { detalles = true }) { Text("?", fontSize = 22.sp) }
                 }
+                if (seccion == Seccion.INICIO) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SuggestionChip(onClick = {}, label = { Text(if(estado.demostracion) "Demostración" else if(estado.conectado) "Cuenta conectada" else "Sin conectar") })
                     estado.consumo?.let { SuggestionChip(onClick = {}, label = { Text(it.plan.replaceFirstChar(Char::uppercase)) }) }
@@ -112,31 +123,7 @@ class PantallaPrincipal : ComponentActivity() {
                         Text(if(estado.demostracion) "Vista previa" else antiguedad(consumo.fecha), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
                         FilledTonalButton(onClick = { alcance.launch { refrescar() } }, enabled = !ocupado && estado.conectado) { Text(if(ocupado) "Consultando…" else "Actualizar") }
                     }
-                    Text("Historial de disponibilidad", style = MaterialTheme.typography.titleMedium)
-                    if(estado.historial.size >= 2) Grafico(estado.historial)
-                    else Text("El gráfico se construye con tus próximas consultas. Los porcentajes no equivalen a una cantidad fija de tokens.", style = MaterialTheme.typography.bodyMedium, color = colores.onSurfaceVariant)
-                    Text("Los tokens exactos por día no están disponibles en esta conexión.", style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
-                    Text("En tu pantalla de inicio", style = MaterialTheme.typography.titleMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = {
-                            val gestor = AppWidgetManager.getInstance(contexto)
-                            if(gestor.isRequestPinAppWidgetSupported) gestor.requestPinAppWidget(ComponentName(contexto, WidgetCompacto::class.java), null, null)
-                            else aviso = "Mantené presionado el inicio de Android y elegí Widgets → Codex Pulse."
-                        }) { Text("Widget 2×2") }
-                        OutlinedButton(onClick = {
-                            val gestor = AppWidgetManager.getInstance(contexto)
-                            if(gestor.isRequestPinAppWidgetSupported) gestor.requestPinAppWidget(ComponentName(contexto, WidgetCompleto::class.java), null, null)
-                            else aviso = "Mantené presionado el inicio de Android y elegí Widgets → Codex Pulse."
-                        }) { Text("Widget 4×2") }
-                    }
-                    listOf("Indicador 1×1" to WidgetMinimo::class.java, "Cuota semanal 2×2" to WidgetSemanal::class.java, "Historial 4×3" to WidgetHistorial::class.java).forEach { (nombre, receptor) ->
-                        OutlinedButton(onClick = {
-                            val gestor = AppWidgetManager.getInstance(contexto)
-                            if(gestor.isRequestPinAppWidgetSupported) gestor.requestPinAppWidget(ComponentName(contexto, receptor), null, null)
-                            else aviso = "Mantené presionado el inicio y elegí Widgets → Codex Pulse."
-                        }) { Text(nombre) }
-                    }
-                    Text("Podés elegir qué cuota muestra el indicador pequeño en Personalizar widgets. Los tamaños pueden variar según el inicio de tu teléfono.", style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = { seccion = Seccion.AJUSTES }, modifier = Modifier.fillMaxWidth()) { Text("Elegir y agregar widgets") }
                 } ?: Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Tu cuota de Codex,\nsin abrir la PC.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
                     Text("Consultá cuánto queda y cuándo se renuevan tus límites, desde la app o tu pantalla de inicio.", color = colores.onSurfaceVariant)
@@ -172,6 +159,14 @@ class PantallaPrincipal : ComponentActivity() {
                     Text("Ingresás tus datos solo en auth.openai.com. Esta app guarda una sesión cifrada en el teléfono. No es una aplicación oficial de OpenAI.", style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
                     if(!estado.demostracion) OutlinedButton(onClick = { alcance.launch { Repositorio.demostracion(contexto); recargar(); actualizarWidgets(contexto) } }, enabled = !ocupado, modifier = Modifier.fillMaxWidth()) { Text("Explorar la demostración") }
                 }
+                }
+                if (seccion == Seccion.HISTORIAL) {
+                    Text("Historial de disponibilidad", style = MaterialTheme.typography.headlineSmall)
+                    if (estado.demostracion) Mensaje("Datos de ejemplo", "El historial es ilustrativo y no corresponde a una cuenta real.")
+                    if (estado.historial.size >= 2) Grafico(estado.historial)
+                    else Mensaje("Todavía no hay historial", "Se construye con las consultas de esta app. Volvé después de las próximas actualizaciones.")
+                    Text("Se guardan hasta 96 consultas en este teléfono. Los porcentajes no representan una cantidad fija de tokens.", style = MaterialTheme.typography.bodySmall)
+                }
                 codigo?.let { solicitud ->
                     Card(shape = RoundedCornerShape(24.dp)) {
                         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -190,6 +185,8 @@ class PantallaPrincipal : ComponentActivity() {
                         }
                     }
                 }
+                if (seccion == Seccion.AJUSTES) {
+                VistaPreviaWidgets(estado, estiloWidgets)
                 HorizontalDivider()
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text("Colores de la aplicación"); Text("Se adapta al modo claro y oscuro", style = MaterialTheme.typography.bodySmall) }
@@ -248,6 +245,7 @@ class PantallaPrincipal : ComponentActivity() {
                 Text("Se revisa el consumo en cada consulta; las alertas no son instantáneas. La pantalla bloqueada oculta el porcentaje.", style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
                 if(estado.conectado || estado.demostracion || estado.error != null) TextButton(onClick = { confirmarBorrado = true }, enabled = !ocupado) { Text("Borrar sesión y datos de este teléfono", color = colores.error) }
                 Text("Hecho para mirar de un vistazo.", style = MaterialTheme.typography.labelSmall, color = colores.onSurfaceVariant)
+                }
             }
             if(mostrarNavegadores) AlertDialog(
                 onDismissRequest = { mostrarNavegadores = false },
@@ -275,7 +273,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.3.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.4.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }
