@@ -1,6 +1,6 @@
 # Guía de uso
 
-Codex Pulse permite consultar la cuota disponible de Codex y mostrarla en widgets de Android. Es una app comunitaria en desarrollo, no oficial ni afiliada a OpenAI.
+Pulso de Germán permite consultar la cuota disponible de Codex y mostrarla en widgets de Android. Es una app comunitaria en desarrollo, no oficial ni afiliada a OpenAI.
 
 ## Instalar y actualizar
 
@@ -19,7 +19,7 @@ Si la conexión falla, revisá el mensaje que muestra la app. El acceso por cód
 
 ## Agregar y configurar widgets
 
-En **Ajustes**, abrí una vista previa y tocá **Agregar este widget**. Confirmá la incorporación cuando lo solicite el lanzador del teléfono.
+Deslizá hacia los lados para cambiar entre Inicio, Historial y Ajustes. En **Ajustes**, deslizá sobre la vista previa para elegir el diseño y tocá **Agregar este widget**. Confirmá la incorporación cuando lo solicite el lanzador del teléfono.
 
 | Widget | Qué muestra |
 | --- | --- |

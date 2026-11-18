@@ -1,16 +1,16 @@
 <p align="center"><strong>ANDROID · WIDGETS · PRIVACIDAD</strong></p>
-<h1 align="center">Codex Pulse</h1>
+<h1 align="center">Pulso de Germán</h1>
 <p align="center"><strong>Tu cuota de Codex. De un vistazo.</strong><br/>Consultá cuánto queda, cuándo se renueva y elegí cómo verlo en tu inicio.</p>
 <p align="center">
-  <a href="https://github.com/GermanBartoli/CodexPulse/releases"><img src="https://img.shields.io/badge/versión-0.5.1-8FE4C4?style=flat-square" alt="Versión 0.5.1"/></a>
+  <a href="https://github.com/GermanBartoli/CodexPulse/releases"><img src="https://img.shields.io/badge/versión-0.6.0-8FE4C4?style=flat-square" alt="Versión 0.6.0"/></a>
   <img src="https://img.shields.io/badge/Android-12%2B-3DDC84?style=flat-square" alt="Android 12 o posterior"/>
   <img src="https://img.shields.io/badge/Kotlin-2.4.21-7F52FF?style=flat-square" alt="Kotlin 2.4.21"/>
   <img src="https://img.shields.io/badge/interfaz-Compose-4285F4?style=flat-square" alt="Jetpack Compose"/>
   <a href="https://github.com/GermanBartoli/CodexPulse/actions/workflows/android.yml"><img src="https://github.com/GermanBartoli/CodexPulse/actions/workflows/android.yml/badge.svg" alt="Pruebas Android"/></a>
 </p>
-<p align="center"><a href="https://github.com/GermanBartoli/CodexPulse/releases/tag/v0.5.1">Descargar APK 0.5.1 · versión de prueba</a> · <a href="#primeros-pasos">Primeros pasos</a> · <a href="#tecnologías">Tecnologías</a> · <a href="#conexión-y-privacidad">Privacidad</a></p>
+<p align="center"><a href="https://github.com/GermanBartoli/CodexPulse/releases/tag/v0.6.0">Descargar APK 0.6.0 · versión de prueba</a> · <a href="#primeros-pasos">Primeros pasos</a> · <a href="#tecnologías">Tecnologías</a> · <a href="#conexión-y-privacidad">Privacidad</a></p>
 
-![Presentación de Codex Pulse](docs/portada.svg)
+![Presentación de Pulso de Germán](docs/portada.svg)
 
 *Portada ilustrativa con datos de ejemplo. Aplicación comunitaria, no oficial ni afiliada a OpenAI.*
 
@@ -20,7 +20,7 @@
 | --- | --- |
 | <img src="docs/inicio-demo.png" width="290" alt="Inicio con cuotas de demostración"/> | <img src="docs/vista-previa-demo.png" width="290" alt="Vista previa real del widget horizontal"/> |
 
-Capturas de la versión 0.5.0 obtenidas en un emulador Android 16, exclusivamente con datos de demostración. Se conservan los archivos originales, sin reducir su resolución. La versión 0.5.1 agrega la lista de widgets instalados debajo del consumo.
+Capturas de la versión 0.5.0 obtenidas en un emulador Android 16, exclusivamente con datos de demostración. Se conservan los archivos originales, sin reducir su resolución. Desde la versión 0.6.0 podés deslizar entre secciones y recorrer los widgets dentro de la vista previa.
 
 ## Primeros pasos
 
@@ -124,7 +124,7 @@ Se estudió la integración comunitaria de [Codex Usage Android](https://github.
 
 ## Licencia
 
-El código de Codex Pulse se publica bajo la [licencia MIT](LICENSE.md). Podés usarlo, modificarlo y redistribuirlo, incluso comercialmente, conservando el aviso de autoría y la licencia. Se entrega sin garantía. Los avisos de las partes adaptadas de otros proyectos se conservan en [TERCEROS.md](TERCEROS.md).
+El código de Pulso de Germán se publica bajo la [licencia MIT](LICENSE.md). Podés usarlo, modificarlo y redistribuirlo, incluso comercialmente, conservando el aviso de autoría y la licencia. Se entrega sin garantía. Los avisos de las partes adaptadas de otros proyectos se conservan en [TERCEROS.md](TERCEROS.md).
 
 El texto legal original se conserva en inglés para mantener la licencia estándar reconocible. La licencia del código no otorga derechos sobre marcas ni acceso a servicios de terceros.
 

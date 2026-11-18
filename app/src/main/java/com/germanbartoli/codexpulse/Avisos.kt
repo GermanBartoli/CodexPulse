@@ -46,7 +46,7 @@ object Avisos {
             })
             val abrir = PendingIntent.getActivity(contexto, 0, Intent(contexto, PantallaPrincipal::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
             val publico = Notification.Builder(contexto, CANAL).setSmallIcon(R.drawable.ic_aviso)
-                .setContentTitle("Codex Pulse").setContentText("Abrí la aplicación para ver un aviso de consumo.").build()
+                .setContentTitle("Pulso de Germán").setContentText("Abrí la aplicación para ver un aviso de consumo.").build()
             val texto = limites.joinToString(" · ") { "${it.nombre}: ${it.disponible}% disponible" }
             val aviso = Notification.Builder(contexto, CANAL).setSmallIcon(R.drawable.ic_aviso)
                 .setContentTitle("Tu cuota de Codex está bajando").setContentText(texto)

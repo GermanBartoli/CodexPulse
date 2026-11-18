@@ -3,21 +3,22 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <application android:label="Codex Pulse" android:icon="@drawable/ic_pulse" android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/extraccion" android:usesCleartextTraffic="false" android:theme="@style/TemaPulse" android:supportsRtl="true">
+    <application android:label="Pulso de Germán" android:icon="@drawable/ic_pulse" android:allowBackup="false" android:fullBackupContent="false" android:dataExtractionRules="@xml/extraccion" android:usesCleartextTraffic="false" android:theme="@style/TemaPulse" android:supportsRtl="true">
+        <receiver android:name=".ConfirmacionWidget" android:exported="false" />
         <activity android:name=".ConfiguracionWidget" android:exported="true" />
         <activity android:name=".PantallaPrincipal" android:exported="true">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
-        <receiver android:name=".WidgetCompacto" android:label="Codex · Dos límites" android:exported="false">
+        <receiver android:name=".WidgetCompacto" android:label="Pulso de Germán · Dos límites" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_compacto"/>
         </receiver>
-        <receiver android:name=".WidgetCompleto" android:label="Codex · Horizontal" android:exported="false">
+        <receiver android:name=".WidgetCompleto" android:label="Pulso de Germán · Horizontal" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_completo"/>
         </receiver>
-        <receiver android:name=".WidgetMinimo" android:label="Codex · Indicador" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_minimo"/></receiver>
-        <receiver android:name=".WidgetSemanal" android:label="Codex · Semanal" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_semanal"/></receiver>
-        <receiver android:name=".WidgetHistorial" android:label="Codex · Historial" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_historial"/></receiver>
+        <receiver android:name=".WidgetMinimo" android:label="Pulso de Germán · Indicador" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_minimo"/></receiver>
+        <receiver android:name=".WidgetSemanal" android:label="Pulso de Germán · Semanal" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_semanal"/></receiver>
+        <receiver android:name=".WidgetHistorial" android:label="Pulso de Germán · Historial" android:exported="false"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_historial"/></receiver>
     </application>
 </manifest>

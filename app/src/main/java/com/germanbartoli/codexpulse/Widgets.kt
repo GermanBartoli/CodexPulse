@@ -20,11 +20,21 @@ import androidx.glance.layout.*
 import androidx.glance.text.*
 import androidx.glance.unit.ColorProvider
 
-class WidgetCompacto : GlanceAppWidgetReceiver() { override val glanceAppWidget = CompactoGlance() }
-class WidgetCompleto : GlanceAppWidgetReceiver() { override val glanceAppWidget = CompletoGlance() }
-class WidgetMinimo : GlanceAppWidgetReceiver() { override val glanceAppWidget = MinimoGlance() }
-class WidgetSemanal : GlanceAppWidgetReceiver() { override val glanceAppWidget = SemanalGlance() }
-class WidgetHistorial : GlanceAppWidgetReceiver() { override val glanceAppWidget = HistorialGlance() }
+abstract class ReceptorWidget : GlanceAppWidgetReceiver() {
+    override fun onReceive(contexto: Context, evento: android.content.Intent) {
+        super.onReceive(contexto, evento)
+        when (evento.action) {
+            android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE,
+            android.appwidget.AppWidgetManager.ACTION_APPWIDGET_DELETED -> ConfirmacionWidget.notificar()
+        }
+    }
+}
+
+class WidgetCompacto : ReceptorWidget() { override val glanceAppWidget = CompactoGlance() }
+class WidgetCompleto : ReceptorWidget() { override val glanceAppWidget = CompletoGlance() }
+class WidgetMinimo : ReceptorWidget() { override val glanceAppWidget = MinimoGlance() }
+class WidgetSemanal : ReceptorWidget() { override val glanceAppWidget = SemanalGlance() }
+class WidgetHistorial : ReceptorWidget() { override val glanceAppWidget = HistorialGlance() }
 class CompactoGlance : PulseWidget(Variante.COMPACTO)
 class CompletoGlance : PulseWidget(Variante.COMPLETO)
 class MinimoGlance : PulseWidget(Variante.MINIMO)
@@ -61,7 +71,7 @@ open class PulseWidget(private val variante: Variante, private val estiloPrevio:
             Text(if(estado.demostracion) "DEMO" else if(estado.error != null) "Sin actualizar" else if (limite == null && estado.consumo != null) "No informado" else "disponible", style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 9.sp), maxLines = 1)
         } else {
             Row(GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Codex Pulse", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold), modifier = GlanceModifier.defaultWeight())
+                Text("Pulso de Germán", style = TextStyle(color = GlanceTheme.colors.onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold), modifier = GlanceModifier.defaultWeight())
                 Text("↻", modifier = GlanceModifier.padding(2.dp).clickable(actionRunCallback<RefrescarWidget>()), style = TextStyle(color = GlanceTheme.colors.primary, fontSize = 20.sp))
             }
             val consumo = estado.consumo

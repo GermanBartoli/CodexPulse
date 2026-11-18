@@ -66,7 +66,8 @@ class AplicacionTest {
         historial.recycle()
         interfaz.onNodeWithText("Ajustes", substring = false).performClick()
         interfaz.onNodeWithText("Agregar este widget").assertExists()
-        interfaz.onNodeWithText("Siguiente").performScrollTo().performClick()
+        interfaz.waitUntil(10000) { interfaz.onAllNodesWithContentDescription("Vista previa de Dos límites 2×2").fetchSemanticsNodes().isNotEmpty() }
+        interfaz.onNodeWithContentDescription("Vista previa de Dos límites 2×2").performScrollTo().performTouchInput { swipeLeft() }
         interfaz.onNodeWithText("Horizontal 4×2").assertExists()
         interfaz.waitUntil(10000) { interfaz.onAllNodesWithContentDescription("Vista previa de Horizontal 4×2").fetchSemanticsNodes().isNotEmpty() }
         val previa = interfaz.onRoot().captureToImage().asAndroidBitmap()

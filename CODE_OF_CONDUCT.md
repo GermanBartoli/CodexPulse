@@ -1,6 +1,6 @@
 # Código de conducta
 
-Codex Pulse busca ser un espacio donde se pueda preguntar, aprender y colaborar con respeto, sin importar la experiencia técnica ni las características personales de quienes participan.
+Pulso de Germán busca ser un espacio donde se pueda preguntar, aprender y colaborar con respeto, sin importar la experiencia técnica ni las características personales de quienes participan.
 
 ## Cómo participamos
 

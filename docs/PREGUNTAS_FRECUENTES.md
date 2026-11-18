@@ -2,7 +2,7 @@
 
 ## ¿Es una aplicación oficial?
 
-No. Codex Pulse es un proyecto comunitario, no oficial ni afiliado a OpenAI. El código se publica bajo licencia MIT.
+No. Pulso de Germán es un proyecto comunitario, no oficial ni afiliado a OpenAI. El código se publica bajo licencia MIT.
 
 ## ¿Funciona en Android 16?
 
@@ -34,7 +34,7 @@ La sesión y el historial se guardan cifrados en el dispositivo y se excluyen de
 
 ## ¿Borrar datos cierra todas mis sesiones de ChatGPT?
 
-No. Elimina los datos locales de Codex Pulse. Para gestionar otras sesiones, usá la configuración de tu cuenta en el servicio oficial.
+No. Elimina los datos locales de Pulso de Germán. Para gestionar otras sesiones, usá la configuración de tu cuenta en el servicio oficial.
 
 ## ¿Por qué algunas publicaciones no tienen APK?
 

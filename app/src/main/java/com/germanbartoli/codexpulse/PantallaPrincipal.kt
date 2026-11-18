@@ -15,6 +15,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,7 +46,8 @@ class PantallaPrincipal : ComponentActivity() {
     val contexto = LocalContext.current
     val actividad = contexto as PantallaPrincipal
     val alcance = rememberCoroutineScope()
-    var seccion by remember { mutableStateOf(Seccion.INICIO) }
+    val paginas = rememberPagerState { Seccion.entries.size }
+    fun abrir(seccion: Seccion) { alcance.launch { paginas.animateScrollToPage(seccion.ordinal) } }
     var instalados by remember { mutableStateOf<List<WidgetInstalado>>(emptyList()) }
     var estado by remember { mutableStateOf(Estado()) }
     var ocupado by remember { mutableStateOf(false) }
@@ -84,6 +87,9 @@ class PantallaPrincipal : ComponentActivity() {
         else actividad.window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
         onDispose { actividad.window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
     }
+    LaunchedEffect(contexto) {
+        ConfirmacionWidget.cambios.collect { instalados = listarWidgets(contexto) }
+    }
     LaunchedEffect(Unit) {
         actividad.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             recargar()
@@ -96,17 +102,19 @@ class PantallaPrincipal : ComponentActivity() {
         Scaffold(containerColor = colores.background, bottomBar = {
             NavigationBar {
                 Seccion.entries.forEach { destino ->
-                    NavigationBarItem(selected = seccion == destino, onClick = { seccion = destino },
+                    NavigationBarItem(selected = paginas.currentPage == destino.ordinal, onClick = { abrir(destino) },
                         icon = { Text(destino.simbolo, fontSize = 22.sp) }, label = { Text(destino.titulo) })
                 }
             }
         }) { margenes ->
-            val desplazamiento = key(seccion) { rememberScrollState() }
-            Column(Modifier.fillMaxSize().padding(margenes).consumeWindowInsets(margenes).verticalScroll(desplazamiento).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            HorizontalPager(paginas, Modifier.fillMaxSize().padding(margenes).consumeWindowInsets(margenes), verticalAlignment = Alignment.Top) { pagina ->
+            val seccion = Seccion.entries[pagina]
+            val desplazamiento = rememberScrollState()
+            Column(Modifier.fillMaxSize().verticalScroll(desplazamiento).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("TU CONSUMO, A MANO", style = MaterialTheme.typography.labelSmall, color = colores.primary, letterSpacing = 2.sp)
-                        Text("Codex Pulse", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+                        Text("Pulso de Germán", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                     }
                     FilledTonalIconButton(onClick = { detalles = true }) { Text("?", fontSize = 22.sp) }
                 }
@@ -124,7 +132,7 @@ class PantallaPrincipal : ComponentActivity() {
                         Text(if(estado.demostracion) "Vista previa" else antiguedad(consumo.fecha), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
                         FilledTonalButton(onClick = { alcance.launch { refrescar() } }, enabled = !ocupado && estado.conectado) { Text(if(ocupado) "Consultando…" else "Actualizar") }
                     }
-                    Button(onClick = { seccion = Seccion.AJUSTES }, modifier = Modifier.fillMaxWidth()) { Text("Elegir y agregar widgets") }
+                    Button(onClick = { abrir(Seccion.AJUSTES) }, modifier = Modifier.fillMaxWidth()) { Text("Elegir y agregar widgets") }
                 } ?: Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Tu cuota de Codex,\nsin abrir la PC.", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
                     Text("Consultá cuánto queda y cuándo se renuevan tus límites, desde la app o tu pantalla de inicio.", color = colores.onSurfaceVariant)
@@ -165,8 +173,8 @@ class PantallaPrincipal : ComponentActivity() {
                     HorizontalDivider()
                     Text("Tus widgets agregados", style = MaterialTheme.typography.titleLarge)
                     if (instalados.isEmpty()) {
-                        Text("Todavía no agregaste widgets de Codex Pulse a tu pantalla de inicio.", style = MaterialTheme.typography.bodyMedium)
-                        TextButton(onClick = { seccion = Seccion.AJUSTES }) { Text("Ver los widgets disponibles") }
+                        Text("Todavía no agregaste widgets de Pulso de Germán a tu pantalla de inicio.", style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = { abrir(Seccion.AJUSTES) }) { Text("Ver los widgets disponibles") }
                     } else {
                         Text(if (instalados.size == 1) "Tenés 1 widget en tu inicio" else "Tenés ${instalados.size} widgets en tu inicio", style = MaterialTheme.typography.bodySmall)
                         instalados.forEachIndexed { indice, widget ->
@@ -246,7 +254,7 @@ class PantallaPrincipal : ComponentActivity() {
                         } else {
                             alertas = activar && Avisos.permitido(contexto)
                             Preferencias.alertas(contexto, alertas)
-                            if (activar && !alertas) aviso = "Android bloquea las notificaciones. Habilitalas en Ajustes → Aplicaciones → Codex Pulse → Notificaciones."
+                            if (activar && !alertas) aviso = "Android bloquea las notificaciones. Habilitalas en Ajustes → Aplicaciones → Pulso de Germán → Notificaciones."
                         }
                     })
                 }
@@ -254,6 +262,7 @@ class PantallaPrincipal : ComponentActivity() {
                 if(estado.conectado || estado.demostracion || estado.error != null) TextButton(onClick = { confirmarBorrado = true }, enabled = !ocupado) { Text("Borrar sesión y datos de este teléfono", color = colores.error) }
                 Text("Hecho para mirar de un vistazo.", style = MaterialTheme.typography.labelSmall, color = colores.onSurfaceVariant)
                 }
+            }
             }
             if(mostrarNavegadores) AlertDialog(
                 onDismissRequest = { mostrarNavegadores = false },
@@ -281,7 +290,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.5.1 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.6.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }

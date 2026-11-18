@@ -1,6 +1,6 @@
 # Cómo colaborar
 
-Podés ayudar a Codex Pulse probando los widgets, informando errores, proponiendo mejoras o enviando cambios de código.
+Podés ayudar a Pulso de Germán probando los widgets, informando errores, proponiendo mejoras o enviando cambios de código.
 
 ## Informar un error o proponer una mejora
 
