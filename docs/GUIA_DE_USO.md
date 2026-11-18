@@ -31,11 +31,11 @@ Deslizá hacia los lados para cambiar entre Inicio, Historial y Ajustes. En **Aj
 
 Los tamaños y las opciones de colocación dependen del lanzador. Las cuotas que el servicio no informa no se reemplazan por datos inventados.
 
-En **Inicio → Tus widgets agregados**, revisá las instancias instaladas y tocá **Configurar** para personalizar una. También podés encontrarlas en Ajustes. Guardar modifica esa instancia; Cancelar conserva su estilo anterior. Los widgets sin configuración propia usan el estilo por defecto.
+En **Inicio → Tus widgets agregados**, revisá las instancias instaladas y tocá **Configurar** para personalizar una. También podés encontrarlas en Ajustes. Tocá un widget y elegí **Cómo quitar este widget** para abrir el inicio del teléfono y retirarlo con una pulsación larga. Guardar modifica esa instancia; Cancelar conserva su estilo anterior. Los widgets sin configuración propia usan el estilo por defecto.
 
 ## Actualizaciones, historial y alertas
 
-Podés actualizar manualmente o elegir consultas automáticas cada 15, 30 o 60 minutos. Android puede demorar las consultas en segundo plano por sus reglas de ahorro de batería. Revisá siempre la hora del último dato.
+Con la cuenta conectada, deslizá hacia abajo desde la parte superior de Inicio para actualizar. El círculo indica que la consulta está en curso. También podés actualizar manualmente o elegir consultas automáticas cada 15, 30 o 60 minutos. Android puede demorar las consultas en segundo plano por sus reglas de ahorro de batería. Revisá siempre la hora del último dato.
 
 El historial guarda las últimas 96 consultas locales y permite filtrar por 24 horas, 7 días o todas las guardadas. No recupera el consumo anterior a la instalación ni convierte porcentajes en tokens exactos.
 

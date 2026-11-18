@@ -59,6 +59,7 @@ class ConfiguracionWidget : ComponentActivity() {
             val predeterminado = remember { Personalizacion.leer(this) }
             var estilo by remember { mutableStateOf(predeterminado) }
             var heredar by remember { mutableStateOf(true) }
+            var explicarRetiro by remember { mutableStateOf(false) }
             var listo by remember { mutableStateOf(false) }
             var guardando by remember { mutableStateOf(false) }
             var error by remember { mutableStateOf<String?>(null) }
@@ -74,6 +75,18 @@ class ConfiguracionWidget : ComponentActivity() {
             }
             val colores = if (isSystemInDarkTheme()) dynamicDarkColorScheme(this) else dynamicLightColorScheme(this)
             MaterialTheme(colorScheme = colores) {
+                if (explicarRetiro) AlertDialog(
+                    onDismissRequest = { explicarRetiro = false },
+                    title = { Text("Quitar del inicio") },
+                    text = { Text("En la pantalla de inicio del teléfono, mantené presionado el widget y elegí Quitar o arrastralo hasta Eliminar.") },
+                    dismissButton = { TextButton(onClick = { explicarRetiro = false }) { Text("Volver") } },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME))
+                            finish()
+                        }) { Text("Ir al inicio del teléfono") }
+                    }
+                )
                 Scaffold(containerColor = colores.background, bottomBar = {
                     Surface {
                         Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -97,6 +110,9 @@ class ConfiguracionWidget : ComponentActivity() {
                     Column(Modifier.fillMaxSize().padding(margenes).consumeWindowInsets(margenes).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text("Solo este widget", style = MaterialTheme.typography.headlineMedium)
                         Text(proveedor.loadLabel(packageManager).toString(), style = MaterialTheme.typography.titleMedium)
+                        if (intent.action != AppWidgetManager.ACTION_APPWIDGET_CONFIGURE) {
+                            TextButton(onClick = { explicarRetiro = true }, enabled = !guardando) { Text("Cómo quitar este widget") }
+                        }
                         error?.let { Text(it, color = colores.error) }
                         if (listo) {
                             VistaPreviaWidgets(estado, estilo, tipoFijo = variante)

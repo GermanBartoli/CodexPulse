@@ -21,6 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -42,6 +43,7 @@ class PantallaPrincipal : ComponentActivity() {
         setContent { Aplicacion() }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun Aplicacion() {
     val contexto = LocalContext.current
     val actividad = contexto as PantallaPrincipal
@@ -77,10 +79,13 @@ class PantallaPrincipal : ComponentActivity() {
         else if(oscuro) darkColorScheme(primary = Color(0xFF8FE4C4), background = Color(0xFF0C1714), surface = Color(0xFF13231D), secondaryContainer = Color(0xFF263D34))
         else lightColorScheme(primary = Color(0xFF146C4F), background = Color(0xFFF4FAF6), surface = Color(0xFFF4FAF6), secondaryContainer = Color(0xFFD8EEE2))
     suspend fun recargar() { estado = Repositorio.leer(contexto); instalados = listarWidgets(contexto) }
+    var actualizando by remember { mutableStateOf(false) }
     suspend fun refrescar() {
+        if (actualizando) return
+        actualizando = true
         ocupado = true
         try { Repositorio.actualizar(contexto); actualizarWidgets(contexto); recargar() }
-        finally { ocupado = false }
+        finally { actualizando = false; ocupado = false }
     }
     DisposableEffect(codigo != null) {
         if(codigo != null) actividad.window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
@@ -110,6 +115,7 @@ class PantallaPrincipal : ComponentActivity() {
             HorizontalPager(paginas, Modifier.fillMaxSize().padding(margenes).consumeWindowInsets(margenes), verticalAlignment = Alignment.Top) { pagina ->
             val seccion = Seccion.entries[pagina]
             val desplazamiento = rememberScrollState()
+            val contenido: @Composable () -> Unit = {
             Column(Modifier.fillMaxSize().verticalScroll(desplazamiento).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -264,6 +270,14 @@ class PantallaPrincipal : ComponentActivity() {
                 }
             }
             }
+            if (seccion == Seccion.INICIO && estado.conectado) {
+                PullToRefreshBox(
+                    isRefreshing = actualizando,
+                    onRefresh = { if (!ocupado) alcance.launch { refrescar() } },
+                    modifier = Modifier.fillMaxSize()
+                ) { contenido() }
+            } else contenido()
+            }
             if(mostrarNavegadores) AlertDialog(
                 onDismissRequest = { mostrarNavegadores = false },
                 title = { Text("Elegí un navegador") },
@@ -290,7 +304,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.6.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.7.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }
