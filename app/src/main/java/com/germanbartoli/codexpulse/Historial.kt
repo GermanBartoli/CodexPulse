@@ -1,6 +1,9 @@
 package com.germanbartoli.codexpulse
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlin.math.abs
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,7 +29,8 @@ private fun fechaHistorial(fecha: Long): String = DateTimeFormatter.ofPattern("d
 
 @Composable fun Grafico(historial: List<Consumo>) {
     var periodo by remember { mutableStateOf(PeriodoHistorial.TODO) }
-    val puntos = filtrarHistorial(historial, periodo, System.currentTimeMillis())
+    val puntos = remember(historial, periodo) { filtrarHistorial(historial, periodo, System.currentTimeMillis()) }
+    var consulta by remember(puntos) { mutableStateOf<Consumo?>(null) }
     val colores = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         PeriodoHistorial.entries.forEach { opcion ->
@@ -43,9 +47,22 @@ private fun fechaHistorial(fecha: Long): String = DateTimeFormatter.ofPattern("d
     val guias = MaterialTheme.colorScheme.outlineVariant
     val descripcion = "Disponibilidad de cero a cien por ciento. ${puntos.size} consultas, desde ${fechaHistorial(desde)} hasta ${fechaHistorial(hasta)}."
     Text("100% disponible", style = MaterialTheme.typography.labelSmall)
-    Canvas(Modifier.fillMaxWidth().height(130.dp).semantics { contentDescription = descripcion }) {
+    Canvas(Modifier.fillMaxWidth().height(130.dp).pointerInput(puntos) {
+        fun elegir(x: Float) {
+            val fecha = desde + (hasta - desde) * (x / size.width.coerceAtLeast(1)).coerceIn(0f, 1f).toDouble()
+            consulta = puntos.minByOrNull { abs(it.fecha - fecha) }
+        }
+        detectDragGesturesAfterLongPress(onDragStart = { elegir(it.x) }) { cambio, _ ->
+            cambio.consume()
+            elegir(cambio.position.x)
+        }
+    }.semantics { contentDescription = descripcion }) {
         listOf(0f, .5f, 1f).forEach { fraccion ->
             drawLine(guias, androidx.compose.ui.geometry.Offset(0f, size.height * fraccion), androidx.compose.ui.geometry.Offset(size.width, size.height * fraccion), strokeWidth = 1.dp.toPx())
+        }
+        consulta?.let {
+            val x = ((it.fecha - desde).toDouble() / (hasta - desde).coerceAtLeast(1)).toFloat() * size.width
+            drawLine(colores.first(), androidx.compose.ui.geometry.Offset(x, 0f), androidx.compose.ui.geometry.Offset(x, size.height), strokeWidth = 1.dp.toPx())
         }
         // Cada serie sigue su duración informada, aunque cambie el orden de los límites.
         val series = if (nombres.isEmpty()) listOf<Long?>(null) else nombres
@@ -63,6 +80,8 @@ private fun fechaHistorial(fecha: Long): String = DateTimeFormatter.ofPattern("d
             drawPath(linea, colores[indice], style = Stroke(width = 2.dp.toPx()))
         }
     }
+    Text(consulta?.let { muestra -> fechaHistorial(muestra.fecha) + " · " + muestra.limites.joinToString(" · ") { "${it.nombre}: ${it.disponible}%" } }
+        ?: "Mantené presionado el gráfico y deslizá para ver cada consulta.", style = MaterialTheme.typography.bodySmall)
     Text("0% disponible", style = MaterialTheme.typography.labelSmall)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(fechaHistorial(desde), style = MaterialTheme.typography.labelSmall)

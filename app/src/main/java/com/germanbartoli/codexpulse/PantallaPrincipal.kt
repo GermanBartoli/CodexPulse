@@ -49,7 +49,7 @@ class PantallaPrincipal : ComponentActivity() {
     val actividad = contexto as PantallaPrincipal
     val alcance = rememberCoroutineScope()
     val paginas = rememberPagerState { Seccion.entries.size }
-    fun abrir(seccion: Seccion) { alcance.launch { paginas.animateScrollToPage(seccion.ordinal) } }
+    fun abrir(seccion: Seccion) { alcance.launch { paginas.animateScrollToPage(seccion.ordinal, animationSpec = androidx.compose.animation.core.tween(260)) } }
     var instalados by remember { mutableStateOf<List<WidgetInstalado>>(emptyList()) }
     var estado by remember { mutableStateOf(Estado()) }
     var ocupado by remember { mutableStateOf(false) }
@@ -112,7 +112,7 @@ class PantallaPrincipal : ComponentActivity() {
                 }
             }
         }) { margenes ->
-            HorizontalPager(paginas, Modifier.fillMaxSize().padding(margenes).consumeWindowInsets(margenes), verticalAlignment = Alignment.Top) { pagina ->
+            HorizontalPager(paginas, Modifier.fillMaxSize().padding(margenes).consumeWindowInsets(margenes), beyondViewportPageCount = 2, verticalAlignment = Alignment.Top) { pagina ->
             val seccion = Seccion.entries[pagina]
             val desplazamiento = rememberScrollState()
             val contenido: @Composable () -> Unit = {
@@ -134,6 +134,7 @@ class PantallaPrincipal : ComponentActivity() {
                 estado.consumo?.let { consumo ->
                     Text("Lo que te queda", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                     consumo.limites.forEach { TarjetaCuota(it) }
+                    AvisarRecuperacion(estado)
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(if(estado.demostracion) "Vista previa" else antiguedad(consumo.fecha), Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
                         FilledTonalButton(onClick = { alcance.launch { refrescar() } }, enabled = !ocupado && estado.conectado) { Text(if(ocupado) "Consultando…" else "Actualizar") }
@@ -230,6 +231,10 @@ class PantallaPrincipal : ComponentActivity() {
                 }
                 VistaPreviaWidgets(estado, estiloWidgets)
                 HorizontalDivider()
+                AjustesNotificacionFija(estado)
+                HorizontalDivider()
+                AjustesAcceso()
+                HorizontalDivider()
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { Text("Colores de la aplicación"); Text("Se adapta al modo claro y oscuro", style = MaterialTheme.typography.bodySmall) }
                     Switch(checked = dinamico, onCheckedChange = { dinamico = it; preferencias.edit().putBoolean("dinamico", it).apply() })
@@ -251,7 +256,7 @@ class PantallaPrincipal : ComponentActivity() {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text("Avisarme cuando quede poco")
-                        Text("Al llegar al 20% y al 10%, sin repetir el mismo aviso. Solo con datos reales.", style = MaterialTheme.typography.bodySmall)
+                        Text("Elegí cuándo recibir avisos para cada límite.", style = MaterialTheme.typography.bodySmall)
                     }
                     Switch(checked = alertas, onCheckedChange = { activar ->
                         if (activar && android.os.Build.VERSION.SDK_INT >= 33 &&
@@ -264,6 +269,7 @@ class PantallaPrincipal : ComponentActivity() {
                         }
                     })
                 }
+                AjustesAlertas()
                 Text("Se revisa el consumo en cada consulta; las alertas no son instantáneas. La pantalla bloqueada oculta el porcentaje.", style = MaterialTheme.typography.bodySmall, color = colores.onSurfaceVariant)
                 if(estado.conectado || estado.demostracion || estado.error != null) TextButton(onClick = { confirmarBorrado = true }, enabled = !ocupado) { Text("Borrar sesión y datos de este teléfono", color = colores.error) }
                 Text("Hecho para mirar de un vistazo.", style = MaterialTheme.typography.labelSmall, color = colores.onSurfaceVariant)
@@ -304,7 +310,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.7.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.8.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }

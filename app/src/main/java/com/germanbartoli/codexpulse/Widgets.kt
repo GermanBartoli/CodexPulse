@@ -23,6 +23,11 @@ import androidx.glance.unit.ColorProvider
 abstract class ReceptorWidget : GlanceAppWidgetReceiver() {
     override fun onReceive(contexto: Context, evento: android.content.Intent) {
         super.onReceive(contexto, evento)
+        if (evento.action == android.appwidget.AppWidgetManager.ACTION_APPWIDGET_DELETED) {
+            val nombres = contexto.getSharedPreferences("nombres_widgets", 0).edit()
+            evento.getIntArrayExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS)?.forEach { nombres.remove(it.toString()) }
+            nombres.apply()
+        }
         when (evento.action) {
             android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE,
             android.appwidget.AppWidgetManager.ACTION_APPWIDGET_DELETED -> ConfirmacionWidget.notificar()

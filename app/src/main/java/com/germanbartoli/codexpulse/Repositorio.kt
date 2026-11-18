@@ -27,6 +27,7 @@ object Repositorio {
     suspend fun nuevaGeneracion(): Long = bloqueo.withLock { ++generacion }
     suspend fun conectar(contexto: Context, sesion: JSONObject, intento: Long): Boolean = withContext(Dispatchers.IO) { bloqueo.withLock {
         if (intento != generacion) return@withLock false
+        Preferencias.datos(contexto).edit().remove("espera").apply()
         AlmacenSeguro(contexto).guardar(JSONObject().put("sesion", sesion))
         true
     } }
@@ -42,7 +43,13 @@ object Repositorio {
         }
         AlmacenSeguro(contexto).guardar(JSONObject().put("demostracion", true).put("consumo", ejemplo.json()).put("historial", historial))
     } }
-    suspend fun borrar(contexto: Context) = withContext(Dispatchers.IO) { bloqueo.withLock { ++generacion; Avisos.cancelar(contexto); AlmacenSeguro(contexto).borrar() } }
+    suspend fun borrar(contexto: Context) = withContext(Dispatchers.IO) { bloqueo.withLock { ++generacion
+        Avisos.cancelar(contexto)
+        contexto.getSystemService(android.app.NotificationManager::class.java).cancel(703)
+        Preferencias.datos(contexto).edit().remove("espera").putBoolean("fija", false).apply()
+        ConsumoVisible.publicar(contexto, Estado())
+        AlmacenSeguro(contexto).borrar()
+        AccesoCuota.refrescar(contexto) } }
     suspend fun actualizar(contexto: Context): Boolean = withContext(Dispatchers.IO) { bloqueo.withLock {
         val almacen = AlmacenSeguro(contexto)
         val datos = try { almacen.leer() } catch (_: Exception) { return@withLock false }
@@ -68,16 +75,23 @@ object Repositorio {
             lista.put(consumo.json())
             datos.put("consumo", consumo.json()).put("historial", lista).remove("error")
             almacen.guardar(datos)
+            val preferencias = Preferencias.datos(contexto)
+            val espera = preferencias.getStringSet("espera", emptySet()).orEmpty()
+            if (cuotaRecuperada(espera, consumo.limites) && Avisos.mostrar(contexto, consumo.limites, recuperada = true)) {
+                preferencias.edit().remove("espera").apply()
+            }
             // Las marcas de aviso se cifran junto al historial. Solo se evalúan datos recién consultados.
             if (Preferencias.alertas(contexto) && Avisos.permitido(contexto)) {
                 val marcas = datos.optJSONObject("avisos") ?: JSONObject()
                 val pendientes = mutableListOf<Pair<Int, Limite>>()
                 consumo.limites.forEachIndexed { indice, limite ->
-                    val clave = indice.toString()
-                    val marca = marcas.optJSONObject(clave)
+                    val clave = limite.segundos?.toString() ?: indice.toString()
+                    val marca = marcas.optJSONObject(clave) ?: marcas.optJSONObject(indice.toString())
                     val periodo = "${limite.segundos}:${limite.reinicio}"
                     val anterior = marca?.takeIf { it.optString("periodo") == periodo }?.optInt("umbral")
-                    val umbral = umbralPendiente(limite.disponible, anterior)
+                    val personalizado = preferencias.getInt("umbral_${limite.segundos}", 0)
+                    val umbral = if (personalizado == 0) umbralPendiente(limite.disponible, anterior)
+                        else personalizado.takeIf { limite.disponible <= it && anterior != it }
                     if (limite.reinicio != null && limite.reinicio <= System.currentTimeMillis() / 1000) return@forEachIndexed
                     if (umbral != null) {
                         pendientes.add(indice to limite)

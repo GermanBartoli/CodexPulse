@@ -27,4 +27,7 @@ class Actualizacion(contexto: Context, parametros: WorkerParameters) : Coroutine
         }
     }
 }
-suspend fun actualizarWidgets(contexto: Context) { CompactoGlance().updateAll(contexto); CompletoGlance().updateAll(contexto); MinimoGlance().updateAll(contexto); SemanalGlance().updateAll(contexto); HistorialGlance().updateAll(contexto) }
+suspend fun actualizarWidgets(contexto: Context) {
+    ConsumoVisible.publicar(contexto, Repositorio.leer(contexto))
+    AccesoCuota.refrescar(contexto)
+    CompactoGlance().updateAll(contexto); CompletoGlance().updateAll(contexto); MinimoGlance().updateAll(contexto); SemanalGlance().updateAll(contexto); HistorialGlance().updateAll(contexto) }

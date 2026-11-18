@@ -103,6 +103,8 @@ private fun desactivarAcciones(vista: View) {
             if (contenido != null) AndroidView(
                 factory = { FrameLayout(it) },
                 update = { contenedor ->
+                    if (contenedor.tag === contenido) return@AndroidView
+                    contenedor.tag = contenido
                     contenedor.removeAllViews()
                     val vista = contenido.apply(contexto, contenedor)
                     desactivarAcciones(vista)

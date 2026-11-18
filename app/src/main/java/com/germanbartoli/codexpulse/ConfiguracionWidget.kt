@@ -34,7 +34,10 @@ fun listarWidgets(contexto: Context): List<WidgetInstalado> {
     val gestor = AppWidgetManager.getInstance(contexto)
     return gestor.installedProviders.filter { it.provider.packageName == contexto.packageName }.flatMap { proveedor ->
         val variante = varianteProveedor(proveedor.provider.className) ?: return@flatMap emptyList()
-        gestor.getAppWidgetIds(proveedor.provider).map { WidgetInstalado(it, proveedor.loadLabel(contexto.packageManager).toString(), variante) }
+        gestor.getAppWidgetIds(proveedor.provider).map { id ->
+            val nombre = contexto.getSharedPreferences("nombres_widgets", 0).getString(id.toString(), null)
+            WidgetInstalado(id, nombre ?: proveedor.loadLabel(contexto.packageManager).toString(), variante)
+        }
     }.sortedWith(compareBy({ it.variante.ordinal }, { it.id }))
 }
 private fun widgetReal(variante: Variante): GlanceAppWidget = when(variante) {
@@ -59,6 +62,8 @@ class ConfiguracionWidget : ComponentActivity() {
             val predeterminado = remember { Personalizacion.leer(this) }
             var estilo by remember { mutableStateOf(predeterminado) }
             var heredar by remember { mutableStateOf(true) }
+            val nombres = remember { getSharedPreferences("nombres_widgets", 0) }
+            var nombre by remember { mutableStateOf(nombres.getString(numero.toString(), "") ?: "") }
             var explicarRetiro by remember { mutableStateOf(false) }
             var listo by remember { mutableStateOf(false) }
             var guardando by remember { mutableStateOf(false) }
@@ -97,6 +102,8 @@ class ConfiguracionWidget : ComponentActivity() {
                                     try {
                                         Personalizacion.guardarPropio(this@ConfiguracionWidget, id, if (heredar) null else estilo)
                                         widgetReal(variante).update(this@ConfiguracionWidget, id)
+                                        nombres.edit().putString(numero.toString(), nombre.trim().ifEmpty { null }).apply()
+                                        ConfirmacionWidget.notificar()
                                         setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, numero))
                                         finish()
                                     } catch (cancelacion: CancellationException) { throw cancelacion }
@@ -110,6 +117,7 @@ class ConfiguracionWidget : ComponentActivity() {
                     Column(Modifier.fillMaxSize().padding(margenes).consumeWindowInsets(margenes).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         Text("Solo este widget", style = MaterialTheme.typography.headlineMedium)
                         Text(proveedor.loadLabel(packageManager).toString(), style = MaterialTheme.typography.titleMedium)
+                        OutlinedTextField(nombre, { nombre = it.take(60) }, singleLine = true, label = { Text("Nombre de este widget") })
                         if (intent.action != AppWidgetManager.ACTION_APPWIDGET_CONFIGURE) {
                             TextButton(onClick = { explicarRetiro = true }, enabled = !guardando) { Text("Cómo quitar este widget") }
                         }

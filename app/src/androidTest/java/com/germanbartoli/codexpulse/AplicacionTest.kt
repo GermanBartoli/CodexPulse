@@ -106,6 +106,21 @@ class AplicacionTest {
         ajustes.recycle()
         val automatizacion = InstrumentationRegistry.getInstrumentation().uiAutomation
         automatizacion.grantRuntimePermission(contexto.packageName, android.Manifest.permission.POST_NOTIFICATIONS)
+        val preferencias = Preferencias.datos(contexto)
+        preferencias.edit().putBoolean("fija", true).putString("titulo_fijo", "Mi {plan}")
+            .putString("texto_fijo", "Semanal {semanal}").apply()
+        val gestor = contexto.getSystemService(android.app.NotificationManager::class.java)
+        val muestra = Estado(consumo = Consumo.ejemplo(), conectado = true)
+        ConsumoVisible.publicar(contexto, muestra)
+        interfaz.waitUntil(5000) { gestor.activeNotifications.any { it.id == ConsumoVisible.ID } }
+        val fija = gestor.activeNotifications.first { it.id == ConsumoVisible.ID }.notification
+        Assert.assertEquals(android.app.Notification.VISIBILITY_PUBLIC, fija.visibility)
+        Assert.assertTrue(fija.flags and android.app.Notification.FLAG_ONGOING_EVENT != 0)
+        Assert.assertEquals("Mi Demostración", fija.extras.getCharSequence(android.app.Notification.EXTRA_TITLE))
+        Assert.assertEquals("Semanal 42%", fija.extras.getCharSequence(android.app.Notification.EXTRA_TEXT))
+        preferencias.edit().putBoolean("fija", false).remove("titulo_fijo").remove("texto_fijo").apply()
+        ConsumoVisible.publicar(contexto, muestra)
+        interfaz.waitUntil(5000) { gestor.activeNotifications.none { it.id == ConsumoVisible.ID } }
         Preferencias.alertas(contexto, true)
         runBlocking { Repositorio.actualizar(contexto) }
         val notificaciones = contexto.getSystemService(android.app.NotificationManager::class.java)

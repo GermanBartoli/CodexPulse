@@ -39,7 +39,11 @@ Con la cuenta conectada, deslizá hacia abajo desde la parte superior de Inicio 
 
 El historial guarda las últimas 96 consultas locales y permite filtrar por 24 horas, 7 días o todas las guardadas. No recupera el consumo anterior a la instalación ni convierte porcentajes en tokens exactos.
 
-Las alertas de disponibilidad al 20% y 10% son opcionales y requieren permiso de notificaciones. Están desactivadas inicialmente y no se generan en la demostración.
+En **Historial**, mantené presionado el gráfico y mové el dedo para ver la hora y las cuotas de cada consulta. Podés darle un nombre a cada widget desde su configuración y tocar **Guardar widget**.
+
+En **Ajustes**, elegí los umbrales para cinco horas y semanal, y un horario de silencio. Se conservan los avisos del 20% y 10% hasta que los cambies. Si agotás la cuota, Inicio ofrece **Avisame cuando vuelva a tener cuota**. El aviso se desactiva al entregarse tras una consulta que confirma disponibilidad.
+
+En **Centro de control**, elegí qué cuota mostrar y agregá el acceso. Tocarlo solicita una actualización. En **Pantalla de bloqueo**, podés activar la notificación fija y guardar tu título y texto con {semanal}, {5h}, {hora} y {plan}. El sistema del teléfono controla la visibilidad en la pantalla bloqueada.
 
 ## Borrar los datos del teléfono
 
