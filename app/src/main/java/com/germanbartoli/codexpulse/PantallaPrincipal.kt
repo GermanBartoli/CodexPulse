@@ -49,7 +49,9 @@ class PantallaPrincipal : ComponentActivity() {
     val actividad = contexto as PantallaPrincipal
     val alcance = rememberCoroutineScope()
     val paginas = rememberPagerState { Seccion.entries.size }
-    fun abrir(seccion: Seccion) { alcance.launch { paginas.animateScrollToPage(seccion.ordinal, animationSpec = androidx.compose.animation.core.tween(260)) } }
+    fun abrir(seccion: Seccion) {
+        paginas.requestScrollToPage(seccion.ordinal)
+    }
     var instalados by remember { mutableStateOf<List<WidgetInstalado>>(emptyList()) }
     var estado by remember { mutableStateOf(Estado()) }
     var ocupado by remember { mutableStateOf(false) }
@@ -310,7 +312,7 @@ class PantallaPrincipal : ComponentActivity() {
                 dismissButton = { TextButton(onClick = { mostrarNavegadores = false }) { Text("Cancelar") } }
             )
             if(confirmarBorrado) AlertDialog(onDismissRequest = { confirmarBorrado = false }, title = { Text("¿Borrar los datos locales?") }, text = { Text("Se eliminarán la sesión, el historial y los porcentajes guardados en este teléfono. Esto no revoca otras sesiones de ChatGPT.") }, confirmButton = { TextButton(onClick = { confirmarBorrado = false; acceso?.cancel(); alcance.launch { Actualizacion.cancelar(contexto); Repositorio.borrar(contexto); aviso = null; recargar(); actualizarWidgets(contexto) } }) { Text("Borrar") } }, dismissButton = { TextButton(onClick = { confirmarBorrado = false }) { Text("Cancelar") } })
-            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.8.0 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
+            if(detalles) AlertDialog(onDismissRequest = { detalles = false }, title = { Text("Privacidad y datos") }, text = { Text("La conexión va directamente a OpenAI por HTTPS. La sesión y el historial se cifran con una clave de Android Keystore y no se incluyen en copias de seguridad.\n\nLa consulta de cuotas utiliza un servicio interno que puede cambiar. No hay servidor propio, publicidad ni analítica. Los porcentajes son límites de uso, no tokens exactos.\n\nVersión 0.8.1 · Aplicación comunitaria.") }, confirmButton = { TextButton(onClick = { detalles = false }) { Text("Entendido") } })
         }
     }
 }

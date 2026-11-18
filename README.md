@@ -2,13 +2,13 @@
 <h1 align="center">Pulso de Germán</h1>
 <p align="center"><strong>Tu cuota de Codex. De un vistazo.</strong><br/>Consultá cuánto queda, cuándo se renueva y elegí cómo verlo en tu inicio.</p>
 <p align="center">
-  <a href="https://github.com/GermanBartoli/CodexPulse/releases"><img src="https://img.shields.io/badge/versión-0.8.0-8FE4C4?style=flat-square" alt="Versión 0.8.0"/></a>
+  <a href="https://github.com/GermanBartoli/CodexPulse/releases"><img src="https://img.shields.io/badge/versión-0.8.1-8FE4C4?style=flat-square" alt="Versión 0.8.1"/></a>
   <img src="https://img.shields.io/badge/Android-12%2B-3DDC84?style=flat-square" alt="Android 12 o posterior"/>
   <img src="https://img.shields.io/badge/Kotlin-2.4.21-7F52FF?style=flat-square" alt="Kotlin 2.4.21"/>
   <img src="https://img.shields.io/badge/interfaz-Compose-4285F4?style=flat-square" alt="Jetpack Compose"/>
   <a href="https://github.com/GermanBartoli/CodexPulse/actions/workflows/android.yml"><img src="https://github.com/GermanBartoli/CodexPulse/actions/workflows/android.yml/badge.svg" alt="Pruebas Android"/></a>
 </p>
-<p align="center"><a href="https://github.com/GermanBartoli/CodexPulse/releases/tag/v0.8.0">Descargar APK 0.8.0 · versión de prueba</a> · <a href="#primeros-pasos">Primeros pasos</a> · <a href="#tecnologías">Tecnologías</a> · <a href="#conexión-y-privacidad">Privacidad</a></p>
+<p align="center"><a href="https://github.com/GermanBartoli/CodexPulse/releases/tag/v0.8.1">Descargar APK 0.8.1 · versión de prueba</a> · <a href="#primeros-pasos">Primeros pasos</a> · <a href="#tecnologías">Tecnologías</a> · <a href="#conexión-y-privacidad">Privacidad</a></p>
 
 ![Presentación de Pulso de Germán](docs/portada.svg)
 
